@@ -1,6 +1,6 @@
-import Dependencies._
-
-ThisBuild / scalaVersion     := "2.13.12"
+ThisBuild / scalaVersion     := "2.13.16"
+ThisBuild / semanticdbEnabled := true
+ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 ThisBuild / version          := "0.1.0"
 ThisBuild / organization     := "nlp4s"
 
@@ -21,6 +21,7 @@ lazy val root = (project in file("."))
       scalacOptions ++= Seq(
         "-Xlint",
         "-Ywarn-dead-code",
+        "-Wunused:imports",
         "-Ywarn-numeric-widen",
         "-unchecked",
         "-deprecation",
