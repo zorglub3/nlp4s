@@ -42,6 +42,17 @@ case class MRS(
 }
 
 object MRS {
+  def newBuilder: Builder = ???
+
+  case class Builder(
+    handleGenerator: Handle.Generator,
+    top: Handle, 
+    eps: Map[Handle, List[Relation[Handle]]],
+    constraints: Map[Handle, Constraint],
+  ) {
+    // TODO
+  }
+
   import cats.syntax.all._
 
   private[mrs] type F[T] = StateT[List, K, T]

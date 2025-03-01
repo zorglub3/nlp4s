@@ -1,10 +1,11 @@
 package nlp4s.tokenizer
 
-import nlp4s.base.NlpResult
-import nlp4s.base.Constants.LeftWall
-import java.util.StringTokenizer
-import cats.data.StateT
 import cats.Eval
+import cats.data.StateT
+import nlp4s.base.Constants.LeftWall
+import nlp4s.base.NlpResult
+
+import java.util.StringTokenizer
 
 class Tokenizer(lexicon: TokenLexicon, delimiters: String) {
   private type Tokenize[A] = StateT[Eval, TokenizerState, A]

@@ -1,8 +1,8 @@
 package nlp4s.parser
 
+import cats.data.StateT
 import nlp4s.base.NlpResult
 import nlp4s.base.WordTag
-import cats.data.StateT
 
 class Parser(ruleMap: RuleMap) {
   type Parse[A] = StateT[List, ParseState, A]

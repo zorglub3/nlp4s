@@ -1,7 +1,9 @@
 package nlp4s.parser
 
-import scalax.collection.mutable.{Graph => MutableGraph, TypedGraphFactory, Builder}
 import scalax.collection.immutable.{Graph => ImmutableGraph}
+import scalax.collection.mutable.Builder
+import scalax.collection.mutable.TypedGraphFactory
+import scalax.collection.mutable.{Graph => MutableGraph}
 
 object ImmutableSentenceGraph {
   type T = ImmutableGraph[Int, SentenceEdge]

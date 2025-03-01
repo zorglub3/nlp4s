@@ -1,8 +1,10 @@
 package nlp4s.parser
 
 import nlp4s.base.LinkTag
-import scalax.collection.generic.{AbstractUnDiEdge, UnapplyLabeledEdge, UnapplyLabel}
 import scalax.collection.edges.UnDiEdge
+import scalax.collection.generic.AbstractUnDiEdge
+import scalax.collection.generic.UnapplyLabel
+import scalax.collection.generic.UnapplyLabeledEdge
 
 case class SentenceEdge(
   override val source: Int, 

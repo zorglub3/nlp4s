@@ -1,6 +1,7 @@
 package nlp4s.parser
 
 import nlp4s.base.WordTag
+
 import scala.collection.mutable.MultiDict
 
 case class RuleMap(entries: MultiDict[String, RuleMap.Entry]) {
