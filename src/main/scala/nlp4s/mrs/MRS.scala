@@ -42,7 +42,12 @@ case class MRS(
 }
 
 object MRS {
-  def newBuilder: Builder = ???
+  def newBuilder: Builder = {
+    val hg = Handle.initGenerator
+    val (hg1, h0) = hg.generate()
+
+    Builder(hg1, h0, Map.empty, Map.empty)
+  }
 
   case class Builder(
     handleGenerator: Handle.Generator,
@@ -50,7 +55,21 @@ object MRS {
     eps: Map[Handle, List[Relation[Handle]]],
     constraints: Map[Handle, Constraint],
   ) {
-    // TODO
+    def mkHandle(): (Builder, Handle) = {
+      val (newHg, h) = handleGenerator.generate()
+      (copy(handleGenerator = newHg), h)
+    }
+
+    def addRelation(handle: Handle, relation: Relation[Handle]): Builder =
+      copy(eps = eps + (handle -> List(relation)))
+
+    def addRelationBag(handle: Handle, relations: List[Relation[Handle]]): Builder =
+      copy(eps = eps + (handle -> relations))
+
+    def addQeqConstraint(src: Handle, target: Handle): Builder =
+      copy(constraints = constraints + (src -> Constraint(target)))
+
+    def result(): MRS = MRS(top, top, eps, constraints)
   }
 
   import cats.syntax.all._
