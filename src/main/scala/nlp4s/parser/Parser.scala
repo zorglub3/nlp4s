@@ -147,7 +147,7 @@ class Parser(ruleMap: RuleMap) {
     } yield ()
   }
 
-  def parse(words: Vector[String]): NlpResult[List[Parser.Output]] = {
+  def run(words: Vector[String]): NlpResult[List[Parser.Output]] = {
     val l = words.length
 
     (begin(0, l) orElse begin(1, l)).runS(init(words)).map(_.result) match {

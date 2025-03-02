@@ -48,7 +48,7 @@ class Tokenizer(lexicon: TokenLexicon, delimiters: String) {
     } yield ()
   }
 
-  def run(s: String): NlpResult[List[String]] = {
+  def run(s: String): NlpResult[Vector[String]] = {
     val stringTokens = new StringTokenizer(s, delimiters)
     val builder = List.newBuilder[String]
 
@@ -57,7 +57,7 @@ class Tokenizer(lexicon: TokenLexicon, delimiters: String) {
     }
 
     scanTokens(builder.result()).runS(init()).value match {
-      case TokenizerState(tokens, Nil) => Right(LeftWall :: tokens.reverse)
+      case TokenizerState(tokens, Nil) => Right((LeftWall :: tokens.reverse).toVector)
       case TokenizerState(_, l @ h::t) => Left(UnrecognizedTokens(l.distinct))
     }
   }
