@@ -32,27 +32,27 @@ case class LinkVerb(
       ),
       WordEntry(
         presentSingular,
-        List(Verb, EnglishWordTags.LinkVerb, VerbRoot(root), Tense(BaseTense.Present)),
+        List(Verb, EnglishWordTags.LinkVerb, VerbRoot(root), WordTense(BaseTense.Present)),
         (opt(l(A)) & l(Ss) & activeVerbWithPredicate),
       ),
       WordEntry(
         presentPlural,
-        List(Verb, EnglishWordTags.LinkVerb, VerbRoot(root), Tense(BaseTense.Present)),
+        List(Verb, EnglishWordTags.LinkVerb, VerbRoot(root), WordTense(BaseTense.Present)),
         (opt(l(A)) & l(Sp) & activeVerbWithPredicate),
       ),
       WordEntry(
         past,
-        List(Verb, EnglishWordTags.LinkVerb, VerbRoot(root), Tense(BaseTense.Past)),
+        List(Verb, EnglishWordTags.LinkVerb, VerbRoot(root), WordTense(BaseTense.Past)),
         (opt(l(A)) & l(S) & activeVerbWithPredicate),
       ),
       WordEntry(
         presentParticiple,
-        List(Verb, EnglishWordTags.LinkVerb, VerbRoot(root), Tense(BaseTense.PresentParticiple)),
+        List(Verb, EnglishWordTags.LinkVerb, VerbRoot(root), WordTense(BaseTense.PresentParticiple)),
         (l(Tr) & r(O)),
       ),
       WordEntry(
         pastParticiple,
-        List(Verb, EnglishWordTags.LinkVerb, VerbRoot(root), Tense(BaseTense.PastParticiple)),
+        List(Verb, EnglishWordTags.LinkVerb, VerbRoot(root), WordTense(BaseTense.PastParticiple)),
         (l(Ta) & activeVerbWithPredicate) | (opt(l(J)) & r(J)),
       ),
     )

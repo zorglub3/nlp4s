@@ -50,7 +50,7 @@ object EnglishWordTags {
 
   // tense
   case object RootForm extends WordTag("rootform")
-  case class Tense(tense: BaseTense) extends WordTag("tense")
+  case class WordTense(tense: BaseTense) extends WordTag("tense")
   case class VerbRoot(root: String) extends WordTag("verbroot")
 
   // adjective

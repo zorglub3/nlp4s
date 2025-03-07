@@ -32,27 +32,27 @@ case class BiTransitiveVerb(
       ),
       WordEntry(
         presentSingular,
-        List(Verb, VerbRoot(root), Singular, Transitive, Tense(BaseTense.Present)),
+        List(Verb, VerbRoot(root), Singular, Transitive, WordTense(BaseTense.Present)),
         (opt(l(A)) & l(Ss) & activeVerbWithObject),
       ),
       WordEntry(
         presentPlural,
-        List(Verb, VerbRoot(root), Plural, Transitive, Tense(BaseTense.Present)),
+        List(Verb, VerbRoot(root), Plural, Transitive, WordTense(BaseTense.Present)),
         (opt(l(A)) & l(Sp) & activeVerbWithObject),
       ),
       WordEntry(
         past,
-        List(Verb, VerbRoot(root), Tense(BaseTense.Past), Transitive),
+        List(Verb, VerbRoot(root), WordTense(BaseTense.Past), Transitive),
         (opt(l(A)) & l(S) & activeVerbWithObject),
       ),
       WordEntry(
         presentParticiple,
-        List(Verb, VerbRoot(root), Tense(BaseTense.PresentParticiple), Transitive),
+        List(Verb, VerbRoot(root), WordTense(BaseTense.PresentParticiple), Transitive),
         (l(Tr) & r(O)),
       ),
       WordEntry(
         pastParticiple,
-        List(Verb, VerbRoot(root), Tense(BaseTense.PastParticiple), Transitive),
+        List(Verb, VerbRoot(root), WordTense(BaseTense.PastParticiple), Transitive),
         (l(Ta) & activeVerbWithObject) | (opt(l(J)) & r(J)),
       ),
     )

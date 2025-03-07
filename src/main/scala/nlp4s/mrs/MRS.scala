@@ -45,12 +45,14 @@ object MRS {
   def newBuilder: Builder = {
     val hg = Handle.initGenerator
     val (hg1, h0) = hg.generate()
+    val vg = Variable.initGenerator
 
-    Builder(hg1, h0, Map.empty, Map.empty)
+    Builder(hg1, vg, h0, Map.empty, Map.empty)
   }
 
   case class Builder(
     handleGenerator: Handle.Generator,
+    variableGenerator: Variable.Generator,
     top: Handle, 
     eps: Map[Handle, List[Relation[Handle]]],
     constraints: Map[Handle, Constraint],
@@ -58,6 +60,11 @@ object MRS {
     def mkHandle(): (Builder, Handle) = {
       val (newHg, h) = handleGenerator.generate()
       (copy(handleGenerator = newHg), h)
+    }
+
+    def mkVariable(): (Builder, Variable) = {
+      val (newVg, v) = variableGenerator.generate()
+      (copy(variableGenerator = newVg), v)
     }
 
     def addRelation(handle: Handle, relation: Relation[Handle]): Builder =

@@ -33,27 +33,27 @@ case class IntransitiveVerb(
       ),
       WordEntry(
         presentSingular,
-        List(Intransitive, Verb, Tense(BaseTense.Present), Singular, VerbRoot(root)),
+        List(Intransitive, Verb, WordTense(BaseTense.Present), Singular, VerbRoot(root)),
         opt(l(A)) & l(Ss) & activeVerb | l(Qs) & activeVerb,
       ),
       WordEntry(
         presentPlural,
-        List(Intransitive, Verb, Tense(BaseTense.Present), Plural, VerbRoot(root)),
+        List(Intransitive, Verb, WordTense(BaseTense.Present), Plural, VerbRoot(root)),
         (opt(l(A)) & l(Sp) & activeVerb),
       ),
       WordEntry(
         past,
-        List(Intransitive, Verb, Tense(BaseTense.Past), VerbRoot(root)),
+        List(Intransitive, Verb, WordTense(BaseTense.Past), VerbRoot(root)),
         opt(l(A)) & l(S) & activeVerb | l(Qs) & activeVerb,
       ),
       WordEntry(
         presentParticiple,
-        List(Intransitive, Verb, Tense(BaseTense.PresentParticiple), VerbRoot(root)),
+        List(Intransitive, Verb, WordTense(BaseTense.PresentParticiple), VerbRoot(root)),
         (l(Tr) & activeVerb) | (opt(l(J)) & activeVerb & r(J)),
       ),
       WordEntry(
         pastParticiple,
-        List(Intransitive, Verb, Tense(BaseTense.PastParticiple), VerbRoot(root)),
+        List(Intransitive, Verb, WordTense(BaseTense.PastParticiple), VerbRoot(root)),
         (l(Ta) & activeVerb), 
       )
     )

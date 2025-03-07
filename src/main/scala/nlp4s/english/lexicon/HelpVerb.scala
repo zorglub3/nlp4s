@@ -14,7 +14,7 @@ case class HelpVerb(
   import LinkRuleSyntax._
   import EnglishLinkTags._
   import EnglishLexiconEntry.WordEntry
-  import EnglishWordTags.{Verb, RootForm, Tense, VerbRoot, Singular, Plural}
+  import EnglishWordTags.{Verb, RootForm, WordTense, VerbRoot, Singular, Plural}
 
   val wordEntries = 
     List(
@@ -25,17 +25,17 @@ case class HelpVerb(
       ), 
       WordEntry(
         presentSingular,
-        List(EnglishWordTags.HelpVerb, Verb, Tense(BaseTense.Present), Singular, VerbRoot(root)),
+        List(EnglishWordTags.HelpVerb, Verb, WordTense(BaseTense.Present), Singular, VerbRoot(root)),
         opt(l(Qw)) & opt(r(N)) & r(Hs) | opt(r(N)) & r(Hs),
       ),
       WordEntry(
         presentPlural,
-        List(EnglishWordTags.HelpVerb, Verb, Tense(BaseTense.Present), Plural, VerbRoot(root)),
+        List(EnglishWordTags.HelpVerb, Verb, WordTense(BaseTense.Present), Plural, VerbRoot(root)),
         opt(l(Qw)) & opt(r(N)) & r(Hp),
       ),
       WordEntry(
         past,
-        List(EnglishWordTags.HelpVerb, Verb, Tense(BaseTense.Past), VerbRoot(root)),
+        List(EnglishWordTags.HelpVerb, Verb, WordTense(BaseTense.Past), VerbRoot(root)),
         opt(l(Qw)) & opt(r(N)) & r(H) | opt(r(N)) & r(Hs),
       )
     )

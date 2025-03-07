@@ -89,4 +89,29 @@ object Relation {
     private[mrs] def flatMapH[I](f: H => MRS.F[I]): MRS.F[Relation[I]] =
       MRS.pure(IntransitiveVerb(verbName, subject))
   }
+
+  case class TransitiveVerb[H](
+    verbName: String,
+    subject: Variable,
+    obj: Variable
+  ) extends Relation[H](verbName, List.empty, List(subject, obj), List.empty) {
+    def mapH[I](f: H => I): Relation[I] =
+      TransitiveVerb(verbName, subject, obj)
+
+    private[mrs] def flatMapH[I](f: H => MRS.F[I]): MRS.F[Relation[I]] =
+      MRS.pure(TransitiveVerb(verbName, subject, obj))
+  }
+
+  case class BitransitiveVerb[H](
+    verbName: String,
+    subject: Variable,
+    obj: Variable,
+    biobj: Variable
+  ) extends Relation[H](verbName, List.empty, List(subject, obj), List.empty) {
+    def mapH[I](f: H => I): Relation[I] =
+      BitransitiveVerb(verbName, subject, obj, biobj)
+
+    private[mrs] def flatMapH[I](f: H => MRS.F[I]): MRS.F[Relation[I]] =
+      MRS.pure(BitransitiveVerb(verbName, subject, obj, biobj))
+  }
 }

@@ -20,7 +20,7 @@ case class ToHave() extends EnglishLexiconEntry {
       ),
       WordEntry(
         "have",
-        List(EnglishWordTags.ToBe, Verb, HelpVerb, VerbRoot("have"), Tense(BaseTense.Present)),
+        List(EnglishWordTags.ToBe, Verb, HelpVerb, VerbRoot("have"), WordTense(BaseTense.Present)),
         ((l(Spi) & opt(r(N)) & toBeObj) |
          (opt(l(Qw)) & r(Sqpi) & opt(r(N)) & toBeObj) |
          (l(Qo) & r(Sqpi)) |
@@ -29,7 +29,7 @@ case class ToHave() extends EnglishLexiconEntry {
       ),
       WordEntry(
         "have",
-        List(EnglishWordTags.ToBe, Verb, HelpVerb, VerbRoot("have"), Tense(BaseTense.Present)),
+        List(EnglishWordTags.ToBe, Verb, HelpVerb, VerbRoot("have"), WordTense(BaseTense.Present)),
         ((l(Spp) & opt(r(N)) & toBeObj) | 
          (opt(l(Qw)) & r(Sqpp) & opt(r(N)) & toBeObj) |
          (l(Qo) & r(Sqpp)) |
@@ -38,7 +38,7 @@ case class ToHave() extends EnglishLexiconEntry {
       ),
       WordEntry(
         "has",
-        List(EnglishWordTags.ToBe, Verb, HelpVerb, VerbRoot("have"), Tense(BaseTense.Present)),
+        List(EnglishWordTags.ToBe, Verb, HelpVerb, VerbRoot("have"), WordTense(BaseTense.Present)),
         ((l(Ss) & opt(r(N)) & toBeObj) | 
          (opt(l(Qw)) & r(Sqs) & opt(r(N)) & toBeObj) |
          (l(Qo) & r(Sqs)) |
@@ -48,7 +48,7 @@ case class ToHave() extends EnglishLexiconEntry {
       ),
       WordEntry(
         "had",
-        List(EnglishWordTags.ToBe, Verb, HelpVerb, VerbRoot("have"), Tense(BaseTense.Past)),
+        List(EnglishWordTags.ToBe, Verb, HelpVerb, VerbRoot("have"), WordTense(BaseTense.Past)),
         ((l(Spi) & opt(r(N)) & toBeObj) |
          (opt(l(Qw)) & r(Sqpi) & opt(r(N)) & toBeObj) |
          (l(Qo) & r(Sqpi)) |
@@ -57,7 +57,7 @@ case class ToHave() extends EnglishLexiconEntry {
       ),
       WordEntry(
         "had",
-        List(EnglishWordTags.ToBe, Verb, HelpVerb, VerbRoot("have"), Tense(BaseTense.Past)),
+        List(EnglishWordTags.ToBe, Verb, HelpVerb, VerbRoot("have"), WordTense(BaseTense.Past)),
         ((l(Ss) & opt(r(N)) & toBeObj) |
          (opt(l(Qw)) & r(Sqs)  & opt(r(N)) & toBeObj) |
          (l(Qo) & r(Sqs)) |
@@ -67,7 +67,7 @@ case class ToHave() extends EnglishLexiconEntry {
       ),
       WordEntry(
         "had",
-        List(EnglishWordTags.ToBe, Verb, HelpVerb, VerbRoot("have"), Tense(BaseTense.Past)),
+        List(EnglishWordTags.ToBe, Verb, HelpVerb, VerbRoot("have"), WordTense(BaseTense.Past)),
         ((l(Spp) & opt(r(N)) & toBeObj) |
          (opt(l(Qw)) & r(Sqpp) & opt(r(N)) & toBeObj) |
          (l(Qo) & r(Sqpp)) |
