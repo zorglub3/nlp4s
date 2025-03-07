@@ -124,4 +124,10 @@ class GraphInterpreter {
 
   def pure[T](v: T): Interpret[T] =
     StateT.pure(v)
+
+  implicit class InterpretSyntax[T](v: Interpret[T]) {
+    def andThen[U](other: Interpret[U]): Interpret[U] = {
+      v.flatMap(_ => other)
+    }
+  }
 }

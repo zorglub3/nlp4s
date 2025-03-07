@@ -1,6 +1,8 @@
 package nlp4s.mrs
 
-case class Handle(n: Int)
+case class Handle(n: Int) {
+  def asString = s"h$n"
+}
 
 object Handle {
   final case class Generator(counter: Int) {

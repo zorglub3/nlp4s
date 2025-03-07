@@ -168,4 +168,22 @@ object MRS {
       rec <- liftFF(eps.map(_.flatMapH(mkRecursiveEP _)))
     } yield Relation.Recursive(h, rec)
   }
+
+  def pp(mrs: MRS): Unit = {
+    def pr(r: Relation[Handle]): String = {
+      val args: Seq[String] = 
+        r.scopedVariables.map(_.name) ++
+        r.variableArgs.map(_.name) ++
+        r.scopalArgs.map(_.asString)
+
+      s"${r.name}(${args.mkString(", ")})"
+    }
+
+    println("<")
+    println(s"  global top:  ${mrs.globalTop.asString}")
+    println(s"  local top:   ${mrs.localTop.asString}")
+    println(s"  relations:   { ${mrs.eps.map { case (k, v) => s"${k.asString}: (${v.map(pr).mkString(", ")})" } .mkString(", ")} }")
+    println(s"  constraints: { ${mrs.constraints.map { case (k, Constraint(v)) => s"${k.asString} =_q ${v.asString}" } .mkString(", ")} }")
+    println(">")
+  }
 }

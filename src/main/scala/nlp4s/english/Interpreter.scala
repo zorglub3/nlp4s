@@ -140,8 +140,9 @@ class Interpreter extends GraphInterpreter {
       subj <- toOption(nounPhraseFrom(EnglishLinkTags.S, mainVerb))
       obj <- toOption(nounPhraseFrom(EnglishLinkTags.O, mainVerb))
       handle <- vf(subj.map(_._3), obj.map(_._3), None)
-      _ <- optional(subj.map(s => addConstraint(s._1, handle)))
-      _ <- optional(obj.map(o => addConstraint(o._1, handle)))
+      top <- getMRSTop()
+      _ <- optional(subj.map { s => addConstraint(s._1, handle) andThen addConstraint(top, s._1) })
+      _ <- optional(obj.map { o => addConstraint(o._1, handle) andThen addConstraint(top, o._1) })
     } yield ()
   }
 
