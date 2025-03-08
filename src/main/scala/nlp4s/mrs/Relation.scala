@@ -79,10 +79,12 @@ object Relation {
       MRS.pure(AdjectiveRelation(adjectiveName, variable1, variable2))
   }
 
+  trait VerbRelation[H] { self: Relation[H] => }
+
   case class IntransitiveVerb[H](
     verbName: String,
     subject: Variable
-  ) extends Relation[H](verbName, List.empty, List(subject), List.empty) {
+  ) extends Relation[H](verbName, List.empty, List(subject), List.empty) with VerbRelation[H] {
     def mapH[I](f: H => I): Relation[I] =
       IntransitiveVerb(verbName, subject)
 
@@ -94,7 +96,7 @@ object Relation {
     verbName: String,
     subject: Variable,
     obj: Variable
-  ) extends Relation[H](verbName, List.empty, List(subject, obj), List.empty) {
+  ) extends Relation[H](verbName, List.empty, List(subject, obj), List.empty) with VerbRelation[H] {
     def mapH[I](f: H => I): Relation[I] =
       TransitiveVerb(verbName, subject, obj)
 
@@ -107,7 +109,7 @@ object Relation {
     subject: Variable,
     obj: Variable,
     biobj: Variable
-  ) extends Relation[H](verbName, List.empty, List(subject, obj), List.empty) {
+  ) extends Relation[H](verbName, List.empty, List(subject, obj), List.empty) with VerbRelation[H] {
     def mapH[I](f: H => I): Relation[I] =
       BitransitiveVerb(verbName, subject, obj, biobj)
 

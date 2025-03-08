@@ -71,7 +71,7 @@ class Interpreter extends GraphInterpreter {
     simpleTense(w) <+> imperativeTense(w) <+> futureTense(w)
 
   def negation(w: Int): Interpret[Boolean] = 
-    graphEdgeFrom(EnglishLinkTags.N, w).flatMap(_ => pure(true)) <+> pure(false)
+    (graphEdgeFrom(EnglishLinkTags.N, w) >> pure(true)) <+> pure(false)
 
   type BuildVerbRelation = 
     (Option[Variable], Option[Variable], Option[Variable]) => Interpret[Handle]
