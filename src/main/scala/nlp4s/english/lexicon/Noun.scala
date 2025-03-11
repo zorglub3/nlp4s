@@ -14,6 +14,8 @@ case class Noun(
   import LinkRuleSyntax._
   import EnglishLexiconEntry.WordEntry
 
+  val label = singular
+
   val singularNoun = opt(l(J)) & l(Ds) & opt(r(Tr)) & opt(r(P))
   val pluralNoun = opt(l(J)) & opt(l(Dp)) & opt(r(Tr)) & opt(r(P))
 

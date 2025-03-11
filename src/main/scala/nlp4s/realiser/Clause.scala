@@ -2,7 +2,10 @@ package nlp4s.realiser
 
 import nlp4s.mrs.Relation
 
-trait Clause
+trait Clause {
+  def punctuation: String = "." // TODO placeholder
+  def conjunction: Option[String] = None // TODO placeholder
+}
 
 object Clause {
   case class StringClause(items: List[String]) extends Clause

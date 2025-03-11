@@ -13,6 +13,8 @@ case class DemonstrativePronoun(
   import EnglishWordTags._
   import EnglishLexiconEntry.WordEntry
 
+  val label = singular
+
   def nominativeSingular = r(Ss) | l(Sqs)
   def nominativePlural = r(Spp) | l(Sqpp)
   def accusative = l(O) | l(R)

@@ -13,6 +13,8 @@ case class Adverb(
   val root: Option[String] = 
     adjectiveRoot orElse Option.when(word.endsWith("ly"))(word.take(word.length - 2))
 
+  val label = root.getOrElse(word)
+
   val wordEntries =
     List(
       WordEntry(

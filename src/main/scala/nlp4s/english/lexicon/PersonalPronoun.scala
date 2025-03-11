@@ -18,6 +18,8 @@ case class PersonalPronoun(
   import LinkRuleSyntax._
   import EnglishLexiconEntry.WordEntry
 
+  val label = nominative
+
   def nominativeRule = 
     if(isPlural) {
       (r(Spp) | l(Sqpp))

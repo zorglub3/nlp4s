@@ -7,6 +7,8 @@ case class Question() extends EnglishLexiconEntry {
   import LinkRuleSyntax._
   import EnglishLexiconEntry.WordEntry
 
+  val label = "question" // TODO
+
   val wordEntries =
     List(
       WordEntry(

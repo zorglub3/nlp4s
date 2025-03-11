@@ -4,6 +4,8 @@ import nlp4s.base.WordTag
 import nlp4s.parser.LinkRule
 
 trait EnglishLexiconEntry {
+  def label: String
+
   def linkRules: List[(String, LinkRule.NormalForm)] = 
     wordEntries.map { entry => entry.word -> entry.linkRule }
 

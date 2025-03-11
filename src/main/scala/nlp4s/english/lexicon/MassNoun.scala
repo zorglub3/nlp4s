@@ -12,6 +12,8 @@ case class MassNoun(
   import LinkRuleSyntax._
   import EnglishLexiconEntry.WordEntry
 
+  val label = singular
+
   val singularNoun = opt(l(J)) & opt(l(Ds)) & opt(r(P))
 
   val singularNounVerb =

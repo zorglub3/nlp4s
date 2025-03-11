@@ -42,6 +42,17 @@ case class MRS(
 }
 
 object MRS {
+  case class Hook(
+    globalTop: Handle,
+    localTop: Handle,
+    index: Option[Variable],
+  )
+
+  object Hook {
+    def basic(gt: Handle, lt: Handle): Hook = 
+      Hook(gt, lt, None)
+  }
+
   def newBuilder: Builder = {
     val hg = Handle.initGenerator
     val (hg1, h0) = hg.generate()

@@ -16,6 +16,8 @@ case class IntransitiveVerb(
   import EnglishWordTags._
   import EnglishLexiconEntry.WordEntry
 
+  val label = root
+
   val activeVerb = opt(l(A)) & opt(r(A)) & opt(r(E)) & opt(r(P)) & opt(r(A)) 
 
   val wordEntries =

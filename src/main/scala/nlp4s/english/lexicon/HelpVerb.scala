@@ -16,6 +16,8 @@ case class HelpVerb(
   import EnglishLexiconEntry.WordEntry
   import EnglishWordTags.{Verb, RootForm, WordTense, VerbRoot, Singular, Plural}
 
+  val label = root
+
   val wordEntries = 
     List(
       WordEntry(

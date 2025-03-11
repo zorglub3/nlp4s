@@ -7,6 +7,8 @@ case class Preposition(word: String) extends EnglishLexiconEntry {
   import LinkRuleSyntax._
   import EnglishLexiconEntry.WordEntry
 
+  val label = word
+
   val wordEntries =
     List(
       WordEntry(

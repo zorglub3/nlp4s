@@ -1,15 +1,15 @@
 package nlp4s.english
 
+import nlp4s.base.LinkTag
+import nlp4s.base.Mode
 import nlp4s.base.NlpResult
 import nlp4s.base.Tense
-import nlp4s.base.Mode
-import nlp4s.base.LinkTag
 import nlp4s.english.lexicon.EnglishLinkTags
 import nlp4s.english.lexicon.EnglishWordTags
 import nlp4s.mrs.GraphInterpreter
+import nlp4s.mrs.Handle
 import nlp4s.mrs.InterpreterError
 import nlp4s.mrs.MRS
-import nlp4s.mrs.Handle
 import nlp4s.mrs.Relation
 import nlp4s.mrs.Variable
 import nlp4s.parser.Parser

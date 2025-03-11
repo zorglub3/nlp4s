@@ -9,6 +9,8 @@ case class DegreeAdverb(
   import EnglishLexiconEntry.WordEntry
   import EnglishLinkTags._
 
+  val label = form
+
   val wordEntries =
     List(
       WordEntry(

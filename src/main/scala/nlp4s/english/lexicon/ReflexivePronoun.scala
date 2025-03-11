@@ -15,6 +15,8 @@ case class ReflexivePronoun(
   import LinkRuleSyntax._
   import EnglishLexiconEntry.WordEntry
 
+  val label = accusative
+
   val gender = genderOpt.map(EnglishWordTags.Gender.apply _).toList
   
   val tags = gender ++ List(Pronoun, Reflexive, Person(person)) :+ (if(isPlural) Plural else Singular)

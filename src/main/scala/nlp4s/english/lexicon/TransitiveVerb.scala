@@ -16,6 +16,8 @@ case class TransitiveVerb(
   import LinkRuleSyntax._
   import EnglishLexiconEntry.WordEntry
 
+  val label = root
+
   val activeVerbWithObject = opt(l(A)) & r(O) & opt(r(A)) & opt(r(E)) & opt(r(P)) & opt(r(A))
 
   val wordEntries =

@@ -9,6 +9,8 @@ case class ToHave() extends EnglishLexiconEntry {
   import LinkRuleSyntax._
   import EnglishLexiconEntry.WordEntry
 
+  val label = "have"
+
   val toBeObj = r(B) | r(O) | r(P) | r(Ta)
 
   val wordEntries =

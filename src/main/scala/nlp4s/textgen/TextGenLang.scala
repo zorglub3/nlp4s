@@ -1,9 +1,9 @@
 package nlp4s.textgen
 
-import nlp4s.base.NlpResult
-import cats.data.WriterT
 import cats.data.StateT
+import cats.data.WriterT
 import cats.syntax.all._
+import nlp4s.base.NlpResult
 
 trait TextGenLang[SentenceSpec, Entity, K] {
   // provided by implementor

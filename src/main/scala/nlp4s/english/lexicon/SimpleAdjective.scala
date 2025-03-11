@@ -9,6 +9,8 @@ case class SimpleAdjective(
   import LinkRuleSyntax._
   import EnglishLexiconEntry.WordEntry
 
+  val label = absolute
+
   val wordEntries =
     List(
       WordEntry( 

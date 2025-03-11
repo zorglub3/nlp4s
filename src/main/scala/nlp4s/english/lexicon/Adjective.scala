@@ -11,6 +11,8 @@ case class Adjective(
   import EnglishLexiconEntry.WordEntry
   import EnglishLinkTags._
 
+  val label = absolute
+
   val wordEntries =
     List(
       WordEntry( 

@@ -8,6 +8,8 @@ case object Wall extends EnglishLexiconEntry {
   import EnglishLexiconEntry.WordEntry
   import EnglishLinkTags._
 
+  val label = "wall"
+
   val wordEntries = 
     List(
       WordEntry(

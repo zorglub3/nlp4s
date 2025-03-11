@@ -7,6 +7,8 @@ case class Negation() extends EnglishLexiconEntry {
   import LinkRuleSyntax._
   import EnglishLexiconEntry.WordEntry
 
+  val label = "not"
+
   val wordEntries =
     List(
       WordEntry(

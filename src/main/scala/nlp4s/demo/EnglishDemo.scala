@@ -1,12 +1,12 @@
 package nlp4s.demo
 
 import nlp4s.base.NlpResult
+import nlp4s.english.Interpreter
 import nlp4s.english.Lexicon
 import nlp4s.english.std._
-import nlp4s.english.Interpreter
+import nlp4s.mrs.MRS
 import nlp4s.parser.Parser
 import nlp4s.tokenizer.Tokenizer
-import nlp4s.mrs.MRS
 
 class EnglishDemo {
   val lexiconBuilder = {

@@ -7,6 +7,8 @@ case class Direction(word: String) extends EnglishLexiconEntry {
   import EnglishLinkTags._
   import EnglishLexiconEntry.WordEntry
 
+  val label = word
+
   val wordEntries =
     List(
       WordEntry(

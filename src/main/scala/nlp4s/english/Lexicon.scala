@@ -7,6 +7,7 @@ import nlp4s.tokenizer.TokenLexicon
 class Lexicon(
   val tokenLexicon: TokenLexicon,
   val ruleMap: RuleMap,
+  val wordBook: WordBook,
 ) 
 
 object Lexicon {
@@ -25,6 +26,7 @@ object Lexicon {
       val allEntries = entries.result()
       val tokenLexiconBuilder = TokenLexicon.newBuilder(ignoreCase)
       val ruleMapBuilder = RuleMap.newBuilder(ignoreCase)
+      val wordBookBuilder = WordBook.newBuilder
 
       for {
         e <- allEntries 
@@ -36,7 +38,9 @@ object Lexicon {
         w <- e.wordEntries
       } ruleMapBuilder.add(w.word, w.tags, w.linkRule)
 
-      new Lexicon(tokenLexiconBuilder.result(), ruleMapBuilder.result())
+      allEntries.foreach { entry => wordBookBuilder.addEntry(entry.label, entry) }
+
+      new Lexicon(tokenLexiconBuilder.result(), ruleMapBuilder.result(), wordBookBuilder.result())
     }
   }
 }

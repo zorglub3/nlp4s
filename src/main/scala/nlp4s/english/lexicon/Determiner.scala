@@ -10,6 +10,8 @@ case class Determiner(word: String, isPlural: Boolean) extends EnglishLexiconEnt
   import LinkRuleSyntax._
   import EnglishLexiconEntry.WordEntry
 
+  val label = word
+
   val wordEntries = 
     List(
       WordEntry(
@@ -24,6 +26,8 @@ case class PossessiveDeterminer(word: String, person: BasePerson, isPlural: Bool
   import LinkRuleSyntax._
   import EnglishLexiconEntry.WordEntry
   import EnglishWordTags._
+
+  val label = word
 
   val wordEntries = 
     List(

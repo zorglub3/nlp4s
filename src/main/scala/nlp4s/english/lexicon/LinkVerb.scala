@@ -16,6 +16,8 @@ case class LinkVerb(
   import EnglishLexiconEntry.WordEntry
   import EnglishWordTags._
 
+  val label = root
+
   val activeVerbWithPredicate =
     opt(l(A)) & (r(P) | r(B))
 

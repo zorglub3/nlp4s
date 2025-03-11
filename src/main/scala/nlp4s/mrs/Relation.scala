@@ -16,6 +16,8 @@ abstract class Relation[H](
   val scopalArgs: Seq[H]
 ) { 
   def isQuantifier: Boolean = false
+  def isVerb: Boolean = false
+  def subject: Option[Variable] = None
 
   def mapH[I](f: H => I): Relation[I] 
   private[mrs] def flatMapH[I](f: H => MRS.F[I]): MRS.F[Relation[I]]
@@ -45,10 +47,14 @@ object Relation {
     }
   }
 
+  trait Noun[H] { self: Relation[H] => }
+
   case class CountNoun[H](
     nounName: String,
     variable: Variable
-  ) extends Relation[H](nounName, List.empty, List(variable), List.empty) {
+  ) extends Relation[H](nounName, List.empty, List(variable), List.empty) with Noun[H] {
+    override def subject = Some(variable)
+
     def mapH[I](f: H => I): Relation[I] =
       CountNoun(nounName, variable)
 
@@ -60,6 +66,8 @@ object Relation {
     adjectiveName: String,
     variable: Variable
   ) extends Relation[H](adjectiveName, List.empty, List(variable), List.empty) {
+    override def subject = Some(variable)
+
     def mapH[I](f: H => I): Relation[I] =
       Adjective(adjectiveName, variable)
 
@@ -79,41 +87,78 @@ object Relation {
       MRS.pure(AdjectiveRelation(adjectiveName, variable1, variable2))
   }
 
-  trait VerbRelation[H] { self: Relation[H] => }
+  case class Preposition[H](
+    prepositionName: String,
+    arg0: Variable,
+    arg1: Variable
+  ) extends Relation[H](
+    prepositionName,
+    List.empty,
+    List(arg0, arg1),
+    List.empty
+  ) {
+    override def subject = Some(arg0)
+
+    def mapH[I](f: H => I): Relation[I] = Preposition(prepositionName, arg0, arg1)
+
+    private[mrs] def flatMapH[I](f: H => MRS.F[I]): MRS.F[Relation[I]] = 
+      MRS.pure(Preposition(prepositionName, arg0, arg1))
+  }
+
+  case class ScopalAdverb[H](
+    adverbName: String,
+    scope: H
+  ) extends Relation[H](adverbName, List.empty, List.empty, List(scope)) {
+    def mapH[I](f: H => I): Relation[I] =
+      ScopalAdverb(adverbName, f(scope))
+
+    private[mrs] def flatMapH[I](f: H => MRS.F[I]): MRS.F[Relation[I]] =
+      for(s <- f(scope)) yield ScopalAdverb(adverbName, s)
+  }
+
+  trait VerbRelation[H] { self: Relation[H] => 
+    abstract override def isVerb = true
+  }
 
   case class IntransitiveVerb[H](
     verbName: String,
-    subject: Variable
-  ) extends Relation[H](verbName, List.empty, List(subject), List.empty) with VerbRelation[H] {
+    arg0: Variable
+  ) extends Relation[H](verbName, List.empty, List(arg0), List.empty) with VerbRelation[H] {
+    override def subject = Some(arg0)
+
     def mapH[I](f: H => I): Relation[I] =
-      IntransitiveVerb(verbName, subject)
+      IntransitiveVerb(verbName, arg0)
 
     private[mrs] def flatMapH[I](f: H => MRS.F[I]): MRS.F[Relation[I]] =
-      MRS.pure(IntransitiveVerb(verbName, subject))
+      MRS.pure(IntransitiveVerb(verbName, arg0))
   }
 
   case class TransitiveVerb[H](
     verbName: String,
-    subject: Variable,
-    obj: Variable
-  ) extends Relation[H](verbName, List.empty, List(subject, obj), List.empty) with VerbRelation[H] {
+    arg0: Variable,
+    arg1: Variable
+  ) extends Relation[H](verbName, List.empty, List(arg0, arg1), List.empty) with VerbRelation[H] {
+    override def subject = Some(arg0)
+
     def mapH[I](f: H => I): Relation[I] =
-      TransitiveVerb(verbName, subject, obj)
+      TransitiveVerb(verbName, arg0, arg1)
 
     private[mrs] def flatMapH[I](f: H => MRS.F[I]): MRS.F[Relation[I]] =
-      MRS.pure(TransitiveVerb(verbName, subject, obj))
+      MRS.pure(TransitiveVerb(verbName, arg0, arg1))
   }
 
   case class BitransitiveVerb[H](
     verbName: String,
-    subject: Variable,
-    obj: Variable,
-    biobj: Variable
-  ) extends Relation[H](verbName, List.empty, List(subject, obj), List.empty) with VerbRelation[H] {
+    arg0: Variable,
+    arg1: Variable,
+    arg2: Variable
+  ) extends Relation[H](verbName, List.empty, List(arg0, arg1, arg2), List.empty) with VerbRelation[H] {
+    override def subject = Some(arg0)
+
     def mapH[I](f: H => I): Relation[I] =
-      BitransitiveVerb(verbName, subject, obj, biobj)
+      BitransitiveVerb(verbName, arg0, arg1, arg2)
 
     private[mrs] def flatMapH[I](f: H => MRS.F[I]): MRS.F[Relation[I]] =
-      MRS.pure(BitransitiveVerb(verbName, subject, obj, biobj))
+      MRS.pure(BitransitiveVerb(verbName, arg0, arg1, arg2))
   }
 }
