@@ -5,6 +5,7 @@ import nlp4s.english.Interpreter
 import nlp4s.english.Lexicon
 import nlp4s.english.std._
 import nlp4s.mrs.MRS
+import nlp4s.mrs.QuantifierScope
 import nlp4s.parser.Parser
 import nlp4s.tokenizer.Tokenizer
 
@@ -25,6 +26,7 @@ class EnglishDemo {
   val tokenizer = new Tokenizer(lexicon.tokenLexicon, delimiters)
   val parser = new Parser(lexicon.ruleMap)
   val interpreter = new Interpreter
+  val quantifierScope = new QuantifierScope
 
   def parseString(s: String): NlpResult[List[Parser.Output]] = {
     for {

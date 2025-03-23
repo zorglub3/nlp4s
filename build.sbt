@@ -4,6 +4,8 @@ ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 ThisBuild / version          := "0.1.0"
 ThisBuild / organization     := "nlp4s"
 
+addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
+
 lazy val dependencies = Seq(
     "org.scalatest" %% "scalatest" % "3.1.2" % Test
   , "org.scala-graph" %% "graph-core" % "2.0.0"

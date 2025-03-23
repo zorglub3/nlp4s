@@ -5,6 +5,8 @@ import nlp4s.base.NlpResult
 import nlp4s.base.WordTag
 
 class Parser(ruleMap: RuleMap) {
+  import cats.syntax.all._
+
   type Parse[A] = StateT[List, ParseState, A]
 
   case class ParseState(
@@ -23,27 +25,8 @@ class Parser(ruleMap: RuleMap) {
       Vector.fill(words.length)(List.empty),
       ImmutableSentenceGraph.empty)
 
-  def get: Parse[ParseState] = StateT.get
-
-  def set(s: ParseState): Parse[Unit] = StateT.set(s)
-
-  def success: Parse[Unit] = StateT.pure( () )
-
-  def fail: Parse[Unit] = StateT.liftF(List.empty)
-
-  def liftF[A](l: List[A]): Parse[A] = StateT.liftF(l)
-
-  def pure[A](v: A): Parse[A] = StateT.pure(v)
-
-  def liftOption[A](a: Option[A]): Parse[A] = StateT.liftF(a.toList)
-
-  def wordRuleEntry(w: Int): Parse[RuleMap.Entry] = {
-    // TODO use inspectF here
-    for {
-      parseState <- get
-      entry <- liftF(ruleMap.lookup(parseState.words(w)))
-    } yield entry
-  }
+  def wordRuleEntry(w: Int): Parse[RuleMap.Entry] =
+    StateT.inspectF { s => ruleMap.lookup(s.words(w)) }
 
   def guard(b: Boolean): Parse[Unit] = StateT.liftF(if(b) List( () ) else List.empty)
 
@@ -59,25 +42,8 @@ class Parser(ruleMap: RuleMap) {
     }
   }
 
-  implicit class ParseSyntax[A](a: Parse[A]) {
-    def orElse(b: Parse[A]): Parse[A] = {
-      val sb = for {
-        bb <- b
-        s <- get
-      } yield (s, bb)
-
-      for {
-        state <- get
-        f <- liftF(a.runF)
-        p = f.apply(state)
-        p <- if(p.nonEmpty) liftF(p) else sb
-        _ <- set(p._1)
-      } yield p._2
-    }
-  }
-
-  def where(cond: Boolean)(p: Parse[Unit]): Parse[Unit] = {
-    if(cond) p else pure(())
+  def where(cond: Boolean)(p: => Parse[Unit]): Parse[Unit] = {
+    if(cond) p else StateT.pure(())
   }
 
   def makeLink(
@@ -89,8 +55,8 @@ class Parser(ruleMap: RuleMap) {
     import SentenceEdgeSyntax._
 
     for {
-      a <- liftOption(as.headOption)
-      b <- liftOption(bs.headOption)
+      a <- StateT.liftF(as.take(1))
+      b <- StateT.liftF(bs.take(1))
       _ <- guard(a.linkTag.matches(b.linkTag))
       _ <- addLink(word1 ~ word2 :+ a.linkTag.simplify)
     } yield ()
@@ -104,9 +70,9 @@ class Parser(ruleMap: RuleMap) {
   ): Parse[Unit] = {
     if(leftIndex + 1 == rightIndex) {
       if(l.isEmpty && r.isEmpty) { 
-        success 
+        StateT.pure[List, ParseState, Unit](()) // succeed
       } else { 
-        fail 
+        StateT.liftF(List.empty) // fail
       }
     } else {
       def leftLinks(w: Int, linkRule: LinkRule): Parse[Boolean] = {
@@ -124,12 +90,12 @@ class Parser(ruleMap: RuleMap) {
       }
 
       for {
-        w <- liftF((leftIndex + 1 until rightIndex).toList)
+        w <- StateT.liftF((leftIndex + 1 until rightIndex).toList)
         entry <- wordRuleEntry(w)
         tags = entry.wordTags
         linkRule = entry.linkRule
-        hasLeftLinks <- leftLinks(w, linkRule) orElse pure(false)
-        hasRightLinks <- rightLinks(w, linkRule) orElse pure(false)
+        hasLeftLinks <- leftLinks(w, linkRule) <+> StateT.pure(false)
+        hasRightLinks <- rightLinks(w, linkRule) <+> StateT.pure(false)
         _ <- where(hasLeftLinks) { link(w, rightIndex, l, linkRule.rightLinks) }
         _ <- where(hasRightLinks) { link(leftIndex, w, linkRule.leftLinks, r) }
         _ <- guard(hasLeftLinks || hasRightLinks)
@@ -150,7 +116,7 @@ class Parser(ruleMap: RuleMap) {
   def run(words: Vector[String]): NlpResult[List[Parser.Output]] = {
     val l = words.length
 
-    (begin(0, l) orElse begin(1, l)).runS(init(words)).map(_.result) match {
+    (begin(0, l) <+> begin(1, l)).runS(init(words)).map(_.result) match {
       case Nil => Left(NoParse())
       case h::t => Right(h::t)
     }

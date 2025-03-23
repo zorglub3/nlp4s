@@ -15,16 +15,45 @@ abstract class Relation[H](
   /// link it to other relations.
   val scopalArgs: Seq[H]
 ) { 
+  def allVariables: Seq[Variable] = scopedVariables ++ variableArgs
   def isQuantifier: Boolean = false
   def isVerb: Boolean = false
   def subject: Option[Variable] = None
 
   def mapH[I](f: H => I): Relation[I] 
-  private[mrs] def flatMapH[I](f: H => MRS.F[I]): MRS.F[Relation[I]]
+  private[mrs] def flatMapH[I](f: H => QuantifierScope.F[I]): QuantifierScope.F[Relation[I]]
 }
 
 object Relation {
-  case class Recursive(handle: Handle, relations: List[Relation[Recursive]])
+  case class Recursive(handle: Handle, relations: List[Relation[Recursive]]) {
+    def allHandles: List[Handle] = {
+      val nested = 
+        for {
+          rel <- relations
+          arg <- rel.scopalArgs
+          han <- arg.allHandles
+        } yield han
+
+      handle :: nested 
+    }
+  }
+
+  def pp(r: Recursive): Unit = {
+    def pp_relation(p: Relation[Recursive]): String = {
+      s"${p.name}(${p.allVariables.map(_.name).mkString(", ")})"
+    }
+
+    def pp_recursive(indent: Int, p: Recursive): Unit = {
+      print("  " * indent)
+      println(s"${p.handle.asString}: ${p.relations.map(pp_relation(_)).mkString(", ")}")
+      for {
+        rr <- p.relations
+        scope <- rr.scopalArgs.toList
+      } pp_recursive(indent + 1, scope)
+    }
+
+    pp_recursive(0, r)
+  }
 
   case class Quantifier[H](
     quantifierName: String,
@@ -37,8 +66,8 @@ object Relation {
     def mapH[I](f: H => I): Relation[I] = 
       Quantifier(quantifierName, variable, f(variablePredicate), f(scope))
 
-    private[mrs] def flatMapH[I](f: H => MRS.F[I]): MRS.F[Relation[I]] = {
-      MRS.withVariables(List(variable)) {
+    private[mrs] def flatMapH[I](f: H => QuantifierScope.F[I]): QuantifierScope.F[Relation[I]] = {
+      QuantifierScope.withVariables(List(variable)) {
         for {
           vp <- f(variablePredicate)
           s  <- f(scope)
@@ -58,8 +87,8 @@ object Relation {
     def mapH[I](f: H => I): Relation[I] =
       CountNoun(nounName, variable)
 
-    private[mrs] def flatMapH[I](f: H => MRS.F[I]): MRS.F[Relation[I]] =
-      MRS.pure(CountNoun(nounName, variable))
+    private[mrs] def flatMapH[I](f: H => QuantifierScope.F[I]): QuantifierScope.F[Relation[I]] =
+      QuantifierScope.pure(CountNoun(nounName, variable))
   }
 
   case class Adjective[H](
@@ -71,8 +100,8 @@ object Relation {
     def mapH[I](f: H => I): Relation[I] =
       Adjective(adjectiveName, variable)
 
-    private[mrs] def flatMapH[I](f: H => MRS.F[I]): MRS.F[Relation[I]] =
-      MRS.pure(Adjective(adjectiveName, variable))
+    private[mrs] def flatMapH[I](f: H => QuantifierScope.F[I]): QuantifierScope.F[Relation[I]] =
+      QuantifierScope.pure(Adjective(adjectiveName, variable))
   }
 
   case class AdjectiveRelation[H](
@@ -83,8 +112,8 @@ object Relation {
     def mapH[I](f: H => I): Relation[I] =
       AdjectiveRelation(adjectiveName, variable1, variable2)
 
-    private[mrs] def flatMapH[I](f: H => MRS.F[I]): MRS.F[Relation[I]] =
-      MRS.pure(AdjectiveRelation(adjectiveName, variable1, variable2))
+    private[mrs] def flatMapH[I](f: H => QuantifierScope.F[I]): QuantifierScope.F[Relation[I]] =
+      QuantifierScope.pure(AdjectiveRelation(adjectiveName, variable1, variable2))
   }
 
   case class Preposition[H](
@@ -101,8 +130,8 @@ object Relation {
 
     def mapH[I](f: H => I): Relation[I] = Preposition(prepositionName, arg0, arg1)
 
-    private[mrs] def flatMapH[I](f: H => MRS.F[I]): MRS.F[Relation[I]] = 
-      MRS.pure(Preposition(prepositionName, arg0, arg1))
+    private[mrs] def flatMapH[I](f: H => QuantifierScope.F[I]): QuantifierScope.F[Relation[I]] = 
+      QuantifierScope.pure(Preposition(prepositionName, arg0, arg1))
   }
 
   case class ScopalAdverb[H](
@@ -112,7 +141,7 @@ object Relation {
     def mapH[I](f: H => I): Relation[I] =
       ScopalAdverb(adverbName, f(scope))
 
-    private[mrs] def flatMapH[I](f: H => MRS.F[I]): MRS.F[Relation[I]] =
+    private[mrs] def flatMapH[I](f: H => QuantifierScope.F[I]): QuantifierScope.F[Relation[I]] =
       for(s <- f(scope)) yield ScopalAdverb(adverbName, s)
   }
 
@@ -129,8 +158,8 @@ object Relation {
     def mapH[I](f: H => I): Relation[I] =
       IntransitiveVerb(verbName, arg0)
 
-    private[mrs] def flatMapH[I](f: H => MRS.F[I]): MRS.F[Relation[I]] =
-      MRS.pure(IntransitiveVerb(verbName, arg0))
+    private[mrs] def flatMapH[I](f: H => QuantifierScope.F[I]): QuantifierScope.F[Relation[I]] =
+      QuantifierScope.pure(IntransitiveVerb(verbName, arg0))
   }
 
   case class TransitiveVerb[H](
@@ -143,8 +172,8 @@ object Relation {
     def mapH[I](f: H => I): Relation[I] =
       TransitiveVerb(verbName, arg0, arg1)
 
-    private[mrs] def flatMapH[I](f: H => MRS.F[I]): MRS.F[Relation[I]] =
-      MRS.pure(TransitiveVerb(verbName, arg0, arg1))
+    private[mrs] def flatMapH[I](f: H => QuantifierScope.F[I]): QuantifierScope.F[Relation[I]] =
+      QuantifierScope.pure(TransitiveVerb(verbName, arg0, arg1))
   }
 
   case class BitransitiveVerb[H](
@@ -158,7 +187,7 @@ object Relation {
     def mapH[I](f: H => I): Relation[I] =
       BitransitiveVerb(verbName, arg0, arg1, arg2)
 
-    private[mrs] def flatMapH[I](f: H => MRS.F[I]): MRS.F[Relation[I]] =
-      MRS.pure(BitransitiveVerb(verbName, arg0, arg1, arg2))
+    private[mrs] def flatMapH[I](f: H => QuantifierScope.F[I]): QuantifierScope.F[Relation[I]] =
+      QuantifierScope.pure(BitransitiveVerb(verbName, arg0, arg1, arg2))
   }
 }
