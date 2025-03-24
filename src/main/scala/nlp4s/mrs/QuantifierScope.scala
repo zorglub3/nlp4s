@@ -2,6 +2,10 @@ package nlp4s.mrs
 
 import cats.data.StateT
 
+// TODO make sure ordering of quantifiers respect predicate use and dependency,
+// so that eg `definite(x, son_of(x, y), ...) is nested under 
+// `definite(y, father(y), ...)` because resolving x depends on resolving y.
+
 class QuantifierScope {
   import cats.syntax.all._
   import QuantifierScope._
