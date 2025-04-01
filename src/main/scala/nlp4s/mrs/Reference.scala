@@ -48,10 +48,10 @@ abstract class Reference[E] {
   // Recursively go through the HPSG form. Resolve inner quantified variables
   // before the outer ones
   def resolve(
-    rel: Relation.Recursive,
+    ast: AST,
     referenceMap: ReferenceMap = Map.empty
   ): ReferenceMap = {
-    rel match {
+    ast.tree match {
       case Relation.Recursive(_handle, relations) => {
         relations
           .map(resolveRel(_, referenceMap))

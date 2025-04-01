@@ -1,5 +1,7 @@
 package nlp4s.mrs
 
+import nlp4s.base.{Tense, Mode}
+
 abstract class Relation[H](
   /// String name of relation for lookup and interpretation
   val name: String,
@@ -147,47 +149,102 @@ object Relation {
 
   trait VerbRelation[H] { self: Relation[H] => 
     abstract override def isVerb = true
+    def variable: Variable
+    def args: List[Variable]
+  }
+
+  case class AuxVerb[H](
+    variable: Variable,
+    verbName: String,
+    arg0: Variable,
+    scope: H
+  ) extends Relation[H](verbName, List.empty, List(variable, arg0), List(scope)) with VerbRelation[H] {
+    def mapH[I](f: H => I): Relation[I] =
+      AuxVerb(variable, verbName, arg0, f(scope))
+
+    private[mrs] def flatMapH[I](f: H => QuantifierScope.F[I]): QuantifierScope.F[Relation[I]] =
+      for(s <- f(scope)) yield AuxVerb(variable, verbName, arg0, s)
+
+    def args = List(arg0)
   }
 
   case class IntransitiveVerb[H](
+    variable: Variable,
     verbName: String,
     arg0: Variable
-  ) extends Relation[H](verbName, List.empty, List(arg0), List.empty) with VerbRelation[H] {
+  ) extends Relation[H](verbName, List.empty, List(variable, arg0), List.empty) with VerbRelation[H] {
     override def subject = Some(arg0)
 
     def mapH[I](f: H => I): Relation[I] =
-      IntransitiveVerb(verbName, arg0)
+      IntransitiveVerb(variable, verbName, arg0)
 
     private[mrs] def flatMapH[I](f: H => QuantifierScope.F[I]): QuantifierScope.F[Relation[I]] =
-      QuantifierScope.pure(IntransitiveVerb(verbName, arg0))
+      QuantifierScope.pure(IntransitiveVerb(variable, verbName, arg0))
+
+    def args = List(arg0)
   }
 
   case class TransitiveVerb[H](
+    variable: Variable,
     verbName: String,
     arg0: Variable,
     arg1: Variable
-  ) extends Relation[H](verbName, List.empty, List(arg0, arg1), List.empty) with VerbRelation[H] {
+  ) extends Relation[H](verbName, List.empty, List(variable, arg0, arg1), List.empty) with VerbRelation[H] {
     override def subject = Some(arg0)
 
     def mapH[I](f: H => I): Relation[I] =
-      TransitiveVerb(verbName, arg0, arg1)
+      TransitiveVerb(variable, verbName, arg0, arg1)
 
     private[mrs] def flatMapH[I](f: H => QuantifierScope.F[I]): QuantifierScope.F[Relation[I]] =
-      QuantifierScope.pure(TransitiveVerb(verbName, arg0, arg1))
+      QuantifierScope.pure(TransitiveVerb(variable, verbName, arg0, arg1))
+
+    def args = List(arg0, arg1)
   }
 
   case class BitransitiveVerb[H](
+    variable: Variable,
     verbName: String,
     arg0: Variable,
     arg1: Variable,
     arg2: Variable
-  ) extends Relation[H](verbName, List.empty, List(arg0, arg1, arg2), List.empty) with VerbRelation[H] {
+  ) extends Relation[H](verbName, List.empty, List(variable, arg0, arg1, arg2), List.empty) with VerbRelation[H] {
     override def subject = Some(arg0)
 
     def mapH[I](f: H => I): Relation[I] =
-      BitransitiveVerb(verbName, arg0, arg1, arg2)
+      BitransitiveVerb(variable, verbName, arg0, arg1, arg2)
 
     private[mrs] def flatMapH[I](f: H => QuantifierScope.F[I]): QuantifierScope.F[Relation[I]] =
-      QuantifierScope.pure(BitransitiveVerb(verbName, arg0, arg1, arg2))
+      QuantifierScope.pure(BitransitiveVerb(variable, verbName, arg0, arg1, arg2))
+
+    def args = List(arg0, arg1, arg2)
+  }
+
+  case class VerbMode[H](
+    mode: Mode,
+    arg0: Variable
+  ) extends Relation[H]("mode_" + mode.asString(), List.empty, List(arg0), List.empty) {
+    def mapH[I](f: H => I): Relation[I] = VerbMode(mode, arg0)
+
+    private[mrs] def flatMapH[I](f: H => QuantifierScope.F[I]): QuantifierScope.F[Relation[I]] =
+      QuantifierScope.pure(VerbMode(mode, arg0))
+  }
+
+  case class VerbTense[H](
+    tense: Tense,
+    arg0: Variable
+  ) extends Relation[H]("tense_" + tense.asString(), List.empty, List(arg0), List.empty) {
+    def mapH[I](f: H => I): Relation[I] = VerbTense(tense, arg0)
+
+    private[mrs] def flatMapH[I](f: H => QuantifierScope.F[I]): QuantifierScope.F[Relation[I]] =
+      QuantifierScope.pure(VerbTense(tense, arg0))
+  }
+
+  case class ImplicitImperative[H](
+    variable: Variable,
+  ) extends Relation[H]("implicit_imperative", List.empty, List(variable), List.empty) {
+    def mapH[I](f: H => I): Relation[I] = ImplicitImperative(variable)
+
+    private[mrs] def flatMapH[I](f: H => QuantifierScope.F[I]): QuantifierScope.F[Relation[I]] =
+      QuantifierScope.pure(ImplicitImperative(variable))
   }
 }

@@ -7,6 +7,8 @@ import nlp4s.mrs.MRS
 import nlp4s.parser.ImmutableSentenceGraph
 import nlp4s.parser.SentenceEdgeSyntax
 
+// TODO use improved (non-withFilter) for-comprehensions
+
 class GraphInterpreter {
   import cats.syntax.all._
 
@@ -59,6 +61,14 @@ class GraphInterpreter {
       _ <- StateT.set[Option, InterpreterState](s.copy(mrsBuilder = p._1))
     } yield p._2
 
+  def makeGlobalVariable(): Interpret[Variable] = {
+    for {
+      s <- StateT.get[Option, InterpreterState]
+      p = s.mrsBuilder.mkGlobalVariable()
+      _ <- StateT.set[Option, InterpreterState](s.copy(mrsBuilder = p._1))
+    } yield p._2
+  }
+
   def mrsOp(f: MRS.Builder => MRS.Builder): Interpret[Unit] =
     for {
       s <- StateT.get[Option, InterpreterState]
@@ -67,6 +77,9 @@ class GraphInterpreter {
 
   def addRelation(handle: Handle, relation: Relation[Handle]): Interpret[Unit] =
     mrsOp(_.addRelation(handle, relation))
+
+  def addGlobalRelation(relation: Relation[Handle]): Interpret[Unit] = 
+    mrsOp(_.addGlobalRelation(relation))
 
   def addRelationBag(handle: Handle, relations: List[Relation[Handle]]): Interpret[Unit] =
     mrsOp(_.addRelationBag(handle, relations))

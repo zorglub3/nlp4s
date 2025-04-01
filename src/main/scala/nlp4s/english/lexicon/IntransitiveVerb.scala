@@ -24,7 +24,7 @@ case class IntransitiveVerb(
     List(
       WordEntry(
         root,
-        List(Intransitive, Verb, RootForm, VerbRoot(root)),
+        List(Label(label), Intransitive, Verb, RootForm, VerbRoot(root)),
         ((opt(l(A)) & opt(l(Hr)) & l(W) & activeVerb) | 
          (l(Hs) & l(Ss) & activeVerb) | 
          (l(Hs) & l(Qs) & activeVerb) |
@@ -35,27 +35,27 @@ case class IntransitiveVerb(
       ),
       WordEntry(
         presentSingular,
-        List(Intransitive, Verb, WordTense(BaseTense.Present), Singular, VerbRoot(root)),
+        List(Label(label), Intransitive, Verb, WordTense(BaseTense.Present), Singular, VerbRoot(root)),
         opt(l(A)) & l(Ss) & activeVerb | l(Qs) & activeVerb,
       ),
       WordEntry(
         presentPlural,
-        List(Intransitive, Verb, WordTense(BaseTense.Present), Plural, VerbRoot(root)),
+        List(Label(label), Intransitive, Verb, WordTense(BaseTense.Present), Plural, VerbRoot(root)),
         (opt(l(A)) & l(Sp) & activeVerb),
       ),
       WordEntry(
         past,
-        List(Intransitive, Verb, WordTense(BaseTense.Past), VerbRoot(root)),
+        List(Label(label), Intransitive, Verb, WordTense(BaseTense.Past), VerbRoot(root)),
         opt(l(A)) & l(S) & activeVerb | l(Qs) & activeVerb,
       ),
       WordEntry(
         presentParticiple,
-        List(Intransitive, Verb, WordTense(BaseTense.PresentParticiple), VerbRoot(root)),
+        List(Label(label), Intransitive, Verb, WordTense(BaseTense.PresentParticiple), VerbRoot(root)),
         (l(Tr) & activeVerb) | (opt(l(J)) & activeVerb & r(J)),
       ),
       WordEntry(
         pastParticiple,
-        List(Intransitive, Verb, WordTense(BaseTense.PastParticiple), VerbRoot(root)),
+        List(Label(label), Intransitive, Verb, WordTense(BaseTense.PastParticiple), VerbRoot(root)),
         (l(Ta) & activeVerb), 
       )
     )

@@ -7,6 +7,9 @@ import nlp4s.base.{Person => BasePerson}
 import nlp4s.base.{Tense => BaseTense}
 
 object EnglishWordTags {
+  // general
+  case class Label(l: String) extends WordTag("label:" ++ l)
+
   // word classes
   case object Noun extends WordTag("noun")
   case object Verb extends WordTag("verb")

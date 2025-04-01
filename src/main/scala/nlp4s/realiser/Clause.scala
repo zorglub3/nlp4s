@@ -1,6 +1,6 @@
 package nlp4s.realiser
 
-import nlp4s.mrs.Relation
+import nlp4s.mrs.AST
 
 trait Clause {
   def punctuation: String = "." // TODO placeholder
@@ -10,7 +10,7 @@ trait Clause {
 object Clause {
   case class StringClause(items: List[String]) extends Clause
   // case class MixedClause(items: List[Item]) extends Clause
-  case class MRSClause(mrs: Relation.Recursive) extends Clause
+  case class MRSClause(mrs: AST) extends Clause
 
   // trait Item
 

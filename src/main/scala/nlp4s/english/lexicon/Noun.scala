@@ -28,22 +28,22 @@ case class Noun(
     List(
       WordEntry(
         singular,
-        List(EnglishWordTags.Noun, Singular, NounRoot(singular), EnglishWordTags.CountNoun),
+        List(Label(label), EnglishWordTags.Noun, Singular, NounRoot(singular), EnglishWordTags.CountNoun),
         ((singularNoun & singularNounVerb) | (singularNoun & l(R)) | (singularNoun & l(W))),
       ),
       WordEntry(
         plural,
-        List(EnglishWordTags.Noun, Plural, NounRoot(singular), EnglishWordTags.CountNoun),
+        List(Label(label), EnglishWordTags.Noun, Plural, NounRoot(singular), EnglishWordTags.CountNoun),
         ((pluralNoun & pluralNounVerb) | (pluralNoun & l(R)) | (pluralNoun & l(W))),
       ),
       WordEntry(
         singularPossessive,
-        List(EnglishWordTags.Noun, Singular, NounRoot(singular), EnglishWordTags.CountNoun),
+        List(Label(label), EnglishWordTags.Noun, Singular, NounRoot(singular), EnglishWordTags.CountNoun),
         singularNoun & r(D),
       ),
       WordEntry(
         pluralPossessive,
-        List(EnglishWordTags.Noun, Plural, NounRoot(singular), EnglishWordTags.CountNoun),
+        List(Label(label), EnglishWordTags.Noun, Plural, NounRoot(singular), EnglishWordTags.CountNoun),
         pluralNoun & r(D),
       ),
     )

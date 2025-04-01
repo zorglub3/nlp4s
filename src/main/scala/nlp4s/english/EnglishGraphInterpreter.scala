@@ -14,19 +14,26 @@ import nlp4s.mrs.Relation
 import nlp4s.mrs.Variable
 import nlp4s.parser.Parser
 
-class Interpreter extends GraphInterpreter {
+// TODO  cleanup
+class EnglishGraphInterpreter extends GraphInterpreter {
   import cats.syntax.all._
   import EnglishLinkTags._
   import EnglishWordTags._
 
+  def getLabel(position: Int): Interpret[String] =
+    collectFirstTag(position) { case EnglishWordTags.Label(l) => l }
+
+  /*
   def getVerbRelationName(root: String): Interpret[String] =
     pure(root) // TODO - get this from lexicon somehow
 
-  def getQuantifierRelation(name: String): Interpret[String] =
+  def getQuantifierRelation(name: String, plural: Boolean): Interpret[String] = {
     pure(name) // TODO - get this from lexicon
+  }
 
   def getNounRelation(name: String): Interpret[String] =
     pure(name) // TODO - get this from lexicon
+  */
  
   def verbTense(w: Int): Interpret[Tense] =
     collectFirstTag(w) { case EnglishWordTags.WordTense(tense) => tense }
@@ -79,8 +86,9 @@ class Interpreter extends GraphInterpreter {
 
   def verb(w: Int): Interpret[BuildVerbRelation] = {
     for {
-      r <- verbRoot(w)
-      f <- getVerbRelationName(r)
+      // r <- verbRoot(w)
+      // f <- getVerbRelationName(r)
+      label <- getLabel(w)
       t <- verbPhraseTense(w)
       mode = t._1
       tense = t._2
@@ -88,41 +96,59 @@ class Interpreter extends GraphInterpreter {
     } yield {
       case (None, Some(obj), Some(biObj)) if mode == Mode.Imperative => {
         for {
-          v <- makeVariable()
+          v <- makeVariable() // TODO add relation on v - imperative
+          u <- makeGlobalVariable()
+          _ <- addGlobalRelation(Relation.VerbMode(mode, u))
+          _ <- addGlobalRelation(Relation.VerbTense(tense, u))
           h <- makeHandle()
-          _ <- addRelation(h, Relation.BitransitiveVerb(f, v, obj, biObj))
+          _ <- addRelation(h, Relation.BitransitiveVerb(u, label, v, obj, biObj))
         } yield h
       }
       case (None, Some(obj), None) if mode == Mode.Imperative => {
         for {
-          v <- makeVariable()
+          v <- makeVariable() // TODO add relation on v - imperative
+          u <- makeGlobalVariable()
+          _ <- addGlobalRelation(Relation.VerbMode(mode, u))
+          _ <- addGlobalRelation(Relation.VerbTense(tense, u))
           h <- makeHandle()
-          _ <- addRelation(h, Relation.TransitiveVerb(f, v, obj))
+          _ <- addRelation(h, Relation.TransitiveVerb(u, label, v, obj))
         } yield h 
       }
       case (None, None, _) if mode == Mode.Imperative => {
         for {
-          v <- makeVariable()
+          v <- makeVariable() // TODO add relation on v - imperative
+          u <- makeGlobalVariable()
+          _ <- addGlobalRelation(Relation.VerbMode(mode, u))
+          _ <- addGlobalRelation(Relation.VerbTense(tense, u))
           h <- makeHandle()
-          _ <- addRelation(h, Relation.IntransitiveVerb(f, v))
+          _ <- addRelation(h, Relation.IntransitiveVerb(u, label, v))
         } yield h
       }
       case (Some(subj), Some(obj), Some(biObj)) => {
         for {
+          u <- makeGlobalVariable()
+          _ <- addGlobalRelation(Relation.VerbMode(mode, u))
+          _ <- addGlobalRelation(Relation.VerbTense(tense, u))
           h <- makeHandle()
-          _ <- addRelation(h, Relation.BitransitiveVerb(f, subj, obj, biObj))
+          _ <- addRelation(h, Relation.BitransitiveVerb(u, label, subj, obj, biObj))
         } yield h
       }
       case (Some(subj), Some(obj), None) => {
         for {
+          u <- makeGlobalVariable()
+          _ <- addGlobalRelation(Relation.VerbMode(mode, u))
+          _ <- addGlobalRelation(Relation.VerbTense(tense, u))
           h <- makeHandle()
-          _ <- addRelation(h, Relation.TransitiveVerb(f, subj, obj))
+          _ <- addRelation(h, Relation.TransitiveVerb(u, label, subj, obj))
         } yield h
       }
       case (Some(subj), None, _) => {
         for {
+          u <- makeGlobalVariable()
+          _ <- addGlobalRelation(Relation.VerbMode(mode, u))
+          _ <- addGlobalRelation(Relation.VerbTense(tense, u))
           h <- makeHandle()
-          _ <- addRelation(h, Relation.IntransitiveVerb(f, subj))
+          _ <- addRelation(h, Relation.IntransitiveVerb(u, label, subj))
         } yield h
       }
       case _ => fail() 
@@ -151,13 +177,15 @@ class Interpreter extends GraphInterpreter {
   def determinerFrom(w: Int): Interpret[MakeQuantifier] = {
     for {
       d <- graphEdgeFrom(EnglishLinkTags.D, w)
-      word <- word(d).map(_.toLowerCase)
-      rel <- getQuantifierRelation(word)
+      // plural <- tokenHasTag(w, EnglishWordTags.Plural)
+      // word <- word(d).map(_.toLowerCase)
+      label <- getLabel(d)
+      // rel <- getQuantifierRelation(word, plural)
       v <- makeVariable()
     } yield { (h1, h2) =>
       for {
         h0 <- makeHandle()
-        _ <- addRelation(h0, Relation.Quantifier(rel, v, h1, h2))
+        _ <- addRelation(h0, Relation.Quantifier(label, v, h1, h2))
       } yield (h0, v)
     }
   }
@@ -175,8 +203,8 @@ class Interpreter extends GraphInterpreter {
   def countNounPhrase(w: Int): Interpret[(Handle, Handle, Variable)] = {
     for {
       _ <- guardTokenHasTag(w, EnglishWordTags.CountNoun)
-      root <- nounRoot(w)
-      npRel <- getNounRelation(root)
+      // root <- nounRoot(w)
+      npRel <- getLabel(w)
       makeQuantifier <- determinerFrom(w)
       makeAdjectives <- adjectivesFrom(w)
       makePrepositions <- prepositionsFrom(w)

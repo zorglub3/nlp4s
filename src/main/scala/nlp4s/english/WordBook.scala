@@ -74,6 +74,10 @@ case class WordBook(
   def quantifierForm(label: String): Option[String] = {
     quantifiers.get(label).map(_.word)
   }
+
+  def quantifierPlural(label: String): Option[Boolean] = {
+    quantifiers.get(label).map(_.plural)
+  }
 }
 
 object WordBook {
@@ -93,7 +97,7 @@ object WordBook {
         case MassNoun(s, sp) => nounEntries += label -> Entry.NounEntry(s, "", sp, "", true)
         case Adjective(a, c, s) => adjectiveEntries += label -> Entry.AdjectiveEntry(a, c, s, false) 
         case SimpleAdjective(a) => adjectiveEntries += label -> Entry.AdjectiveEntry(a, "", "", true)
-        case Determiner(w, plural) => quantifierEntries += label -> Entry.QuantifierEntry(w, plural)
+        case Determiner(_label, w, plural) => quantifierEntries += label -> Entry.QuantifierEntry(w, plural)
         case _ => {} // ignore for now
       }
 

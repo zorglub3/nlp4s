@@ -1,18 +1,18 @@
 package nlp4s.mrs
 
 case class MRS(
-  globalTop: Handle,
-  localTop: Handle,
+  hook: MRS.Hook,
   eps: Map[Handle, List[Relation[Handle]]],
   constraints: Map[Handle, Constraint],
 ) {
+  def globalTop = hook.globalTop
+  def localTop = hook.localTop
+  def globalVariables = hook.globalVariables
+  def globalRelations = hook.globalPredicates
+
   def allHandles: Set[Handle] = 
     (eps.keys ++ constraints.keys).toSet + globalTop + localTop
 
-  // find all handles that are not scopal args of another relation, ie, 
-  // find the handles of all the _floating_ EPs.
-  // Note 1: all _floating_ EPs should have scopal args that are in 'constraints'
-  // Note 2: all _floating_ EPs should be quantifiers
   def floatingEps: Set[Handle] = {
     allHandles.filter { h => 
       ! eps.values.exists { _.exists { _.scopalArgs.contains(h) } }
@@ -21,7 +21,7 @@ case class MRS(
 
   private[mrs] def initState: QuantifierScope.QuantifierState = {
     QuantifierScope.QuantifierState(
-      Set.empty,
+      hook.globalVariables,
       Set.empty,
       eps.filter { p => ! floatingEps.contains(p._1) },
       eps.filter { p => floatingEps.contains(p._1) },
@@ -34,11 +34,13 @@ object MRS {
     globalTop: Handle,
     localTop: Handle,
     index: Option[Variable],
+    globalVariables: Set[Variable],
+    globalPredicates: Set[Relation[Handle]],
   )
 
   object Hook {
     def basic(gt: Handle, lt: Handle): Hook = 
-      Hook(gt, lt, None)
+      Hook(gt, lt, None, Set.empty, Set.empty)
   }
 
   def newBuilder: Builder = {
@@ -46,7 +48,7 @@ object MRS {
     val (hg1, h0) = hg.generate()
     val vg = Variable.initGenerator
 
-    Builder(hg1, vg, h0, Map.empty, Map.empty)
+    Builder(hg1, vg, h0, Map.empty, Map.empty, Set.empty, Set.empty)
   }
 
   case class Builder(
@@ -55,6 +57,8 @@ object MRS {
     top: Handle, 
     eps: Map[Handle, List[Relation[Handle]]],
     constraints: Map[Handle, Constraint],
+    globalVariables: Set[Variable],
+    globalRelations: Set[Relation[Handle]],
   ) {
     def mkHandle(): (Builder, Handle) = {
       val (newHg, h) = handleGenerator.generate()
@@ -66,8 +70,16 @@ object MRS {
       (copy(variableGenerator = newVg), v)
     }
 
+    def mkGlobalVariable(): (Builder, Variable) = {
+      val (newVg, v) = variableGenerator.generate()
+      (copy(variableGenerator = newVg, globalVariables = globalVariables + v), v)
+    }
+
     def addRelation(handle: Handle, relation: Relation[Handle]): Builder =
       copy(eps = eps + (handle -> List(relation)))
+
+    def addGlobalRelation(relation: Relation[Handle]): Builder =
+      copy(globalRelations = globalRelations + relation)
 
     def addRelationBag(handle: Handle, relations: List[Relation[Handle]]): Builder =
       copy(eps = eps + (handle -> relations))
@@ -75,11 +87,17 @@ object MRS {
     def addQeqConstraint(src: Handle, target: Handle): Builder =
       copy(constraints = constraints + (src -> Constraint(target)))
 
-    def result(): MRS = MRS(top, top, eps, constraints)
+    def result(): MRS = 
+      MRS(
+        Hook(top, top, None, globalVariables, globalRelations),
+        eps,
+        constraints)
   }
 
   def pp(mrs: MRS): Unit = {
     def pr(r: Relation[Handle]): String = {
+      // TODO better print of verb relations, eg, "x2:take(x4, x43)" (the "verb global variable")
+
       val args: Seq[String] = 
         r.scopedVariables.map(_.name) ++
         r.variableArgs.map(_.name) ++
@@ -93,6 +111,8 @@ object MRS {
     println(s"  local top:     ${mrs.localTop.asString}")
     println(s"  relations:   { ${mrs.eps.map { case (k, v) => s"${k.asString}: (${v.map(pr).mkString(", ")})" } .mkString(",\n                 ")} }")
     println(s"  constraints: { ${mrs.constraints.map { case (k, Constraint(v)) => s"${k.asString} =_q ${v.asString}" } .mkString(",\n                 ")} }")
+    println(s"  variables:   { ${mrs.globalVariables.map { _.name } .mkString(", ")} }")
+    println(s"  t-relations: { ${mrs.globalRelations.map(pr).mkString(", ")} }")
     println(">")
   }
 }

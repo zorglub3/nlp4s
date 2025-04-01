@@ -40,7 +40,7 @@ class QuantifierScope {
     getEP(h) <+> getFloatingEP(h) <+> getConstrainedEP(h)
   }
 
-  def resolve(mrs: MRS): List[Relation.Recursive] = {
+  def resolve(mrs: MRS): List[AST] = {
     val ep = {
       for {
         ep <- resolveRec(mrs.globalTop)
@@ -48,7 +48,7 @@ class QuantifierScope {
       } yield ep
     }
 
-    ep.runA(mrs.initState)
+    ep.runA(mrs.initState).map(AST.apply(_, mrs.globalRelations, mrs.globalVariables))
   }
 }
 
