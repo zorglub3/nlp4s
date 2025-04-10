@@ -71,7 +71,7 @@ class EnglishGraphInterpreter extends GraphInterpreter {
       r <- verbRoot(h)
       _ <- guard(r == "will")
       _ <- guardTokenHasTag(w, EnglishWordTags.RootForm)
-    } yield (if(h < s) Mode.Interrogative else Mode.Declarative, Tense. Present)
+    } yield (if(h < s) Mode.Interrogative else Mode.Declarative, Tense.Future)
   }
 
   def verbPhraseTense(w: Int): Interpret[(Mode, Tense)] =

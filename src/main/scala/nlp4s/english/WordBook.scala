@@ -25,7 +25,11 @@ case class WordBook(
           case (Person.Third, false, Tense.Present) => Some(ps)
           case (_, _, Tense.Present) => Some(pp)
           case (_, _, Tense.Past) => Some(past)
-          case _ => None // TODO
+          case (_, _, Tense.BareInfinitive) => Some(r)
+          case (_, _, Tense.PresentParticiple) => Some(ppart)
+          case (_, _, Tense.PastParticiple) => Some(pastpart)
+          case (_, _, Tense.FullInfinitive) => Some(r)
+          case x => { println(s"AAARGH! $x") ; None } // TODO
         }
       }
       case _ => None
@@ -93,6 +97,8 @@ object WordBook {
       entry match {
         case IntransitiveVerb(r, ps, pp, ppart, past, pastpart) => verbEntries += label -> Entry.VerbEntry(r, ps, pp, ppart, past, pastpart) 
         case TransitiveVerb(r, ps, pp, ppart, past, pastpart) => verbEntries += label -> Entry.VerbEntry(r, ps, pp, ppart, past, pastpart)
+        case HelpVerb(r, ps, pp, ppart, past, pastpart) => verbEntries += label -> Entry.VerbEntry(r, ps, pp, ppart, past, pastpart)
+        case LinkVerb(r, ps, pp, ppart, past, pastpart) => verbEntries += label -> Entry.VerbEntry(r, ps, pp, ppart, past, pastpart)
         case Noun(s, p, sp, pp) => nounEntries += label -> Entry.NounEntry(s, p, sp, pp, false)
         case MassNoun(s, sp) => nounEntries += label -> Entry.NounEntry(s, "", sp, "", true)
         case Adjective(a, c, s) => adjectiveEntries += label -> Entry.AdjectiveEntry(a, c, s, false) 
