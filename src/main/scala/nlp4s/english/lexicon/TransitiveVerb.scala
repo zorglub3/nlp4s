@@ -24,7 +24,7 @@ case class TransitiveVerb(
     List(
       WordEntry(
         root,
-        List(Verb, RootForm, Transitive),
+        List(Label(label), VerbRoot(root), Verb, RootForm, Transitive),
         ((opt(l(A)) & opt(l(Hr)) & l(W) & activeVerbWithObject) | 
          (opt(l(N)) & l(Ss) & l(Hs) & activeVerbWithObject) | 
          (opt(l(N)) & l(Sp) & l(Hp) & activeVerbWithObject) | 
@@ -35,27 +35,27 @@ case class TransitiveVerb(
       ),
       WordEntry(
         presentSingular,
-        List(Verb, VerbRoot(root), Singular, Transitive, WordTense(BaseTense.Present)),
+        List(Label(label), Verb, VerbRoot(root), Singular, Transitive, WordTense(BaseTense.Present)),
         (opt(l(A)) & l(Ss) & activeVerbWithObject) | l(Qs) & activeVerbWithObject,
       ),
       WordEntry(
         presentPlural,
-        List(Verb, VerbRoot(root), Plural, Transitive, WordTense(BaseTense.Present)),
+        List(Label(label), Verb, VerbRoot(root), Plural, Transitive, WordTense(BaseTense.Present)),
         (opt(l(A)) & l(Sp) & activeVerbWithObject),
       ),
       WordEntry(
         past,
-        List(Verb, VerbRoot(root), WordTense(BaseTense.Past), Transitive),
+        List(Label(label), Verb, VerbRoot(root), WordTense(BaseTense.Past), Transitive),
         (opt(l(A)) & l(S) & activeVerbWithObject) | l(Qs) & activeVerbWithObject,
       ),
       WordEntry(
         presentParticiple,
-        List(Verb, VerbRoot(root), WordTense(BaseTense.PresentParticiple), Transitive),
+        List(Label(label), Verb, VerbRoot(root), WordTense(BaseTense.PresentParticiple), Transitive),
         (opt(l(A)) & l(Tr) & r(O)),
       ),
       WordEntry(
         pastParticiple,
-        List(Verb, VerbRoot(root), WordTense(BaseTense.PastParticiple), Transitive),
+        List(Label(label), Verb, VerbRoot(root), WordTense(BaseTense.PastParticiple), Transitive),
         (l(Ta) & activeVerbWithObject) | (opt(l(J)) & r(J)),
       ),
     )

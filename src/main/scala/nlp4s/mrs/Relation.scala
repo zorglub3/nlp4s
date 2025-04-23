@@ -1,6 +1,6 @@
 package nlp4s.mrs
 
-import nlp4s.base.{Tense, Mode}
+import nlp4s.base.{Tense, Mode, Person}
 
 abstract class Relation[H](
   /// String name of relation for lookup and interpretation
@@ -91,6 +91,20 @@ object Relation {
 
     private[mrs] def flatMapH[I](f: H => QuantifierScope.F[I]): QuantifierScope.F[Relation[I]] =
       QuantifierScope.pure(CountNoun(nounName, variable))
+  }
+
+  case class Pronoun[H](
+    person: Person,
+    plural: Boolean,
+    variable: Variable
+  ) extends Relation[H]("pronoun_" ++ person.asString ++ "_" ++ (if(plural) "plural" else "singular"), List.empty, List(variable), List.empty) {
+    override def subject = Some(variable)
+
+    def mapH[I](f: H => I): Relation[I] =
+      Pronoun(person, plural, variable)
+
+    private[mrs] def flatMapH[I](f: H => QuantifierScope.F[I]): QuantifierScope.F[Relation[I]] =
+      QuantifierScope.pure(Pronoun(person, plural, variable))
   }
 
   case class Adjective[H](

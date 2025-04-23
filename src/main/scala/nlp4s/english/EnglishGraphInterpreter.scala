@@ -14,7 +14,6 @@ import nlp4s.mrs.Relation
 import nlp4s.mrs.Variable
 import nlp4s.parser.Parser
 
-// TODO  cleanup
 class EnglishGraphInterpreter extends GraphInterpreter {
   import cats.syntax.all._
   import EnglishLinkTags._
@@ -23,18 +22,6 @@ class EnglishGraphInterpreter extends GraphInterpreter {
   def getLabel(position: Int): Interpret[String] =
     collectFirstTag(position) { case EnglishWordTags.Label(l) => l }
 
-  /*
-  def getVerbRelationName(root: String): Interpret[String] =
-    pure(root) // TODO - get this from lexicon somehow
-
-  def getQuantifierRelation(name: String, plural: Boolean): Interpret[String] = {
-    pure(name) // TODO - get this from lexicon
-  }
-
-  def getNounRelation(name: String): Interpret[String] =
-    pure(name) // TODO - get this from lexicon
-  */
- 
   def verbTense(w: Int): Interpret[Tense] =
     collectFirstTag(w) { case EnglishWordTags.WordTense(tense) => tense }
 
@@ -82,12 +69,9 @@ class EnglishGraphInterpreter extends GraphInterpreter {
 
   type BuildVerbRelation = 
     (Option[Variable], Option[Variable], Option[Variable]) => Interpret[Handle]
-    //(Option[Variable], Option[Variable], Option[Variable]) => Option[(Mode, Tense, Boolean, Relation[Handle])]
 
   def verb(w: Int): Interpret[BuildVerbRelation] = {
     for {
-      // r <- verbRoot(w)
-      // f <- getVerbRelationName(r)
       label <- getLabel(w)
       t <- verbPhraseTense(w)
       mode = t._1
@@ -177,10 +161,7 @@ class EnglishGraphInterpreter extends GraphInterpreter {
   def determinerFrom(w: Int): Interpret[MakeQuantifier] = {
     for {
       d <- graphEdgeFrom(EnglishLinkTags.D, w)
-      // plural <- tokenHasTag(w, EnglishWordTags.Plural)
-      // word <- word(d).map(_.toLowerCase)
       label <- getLabel(d)
-      // rel <- getQuantifierRelation(word, plural)
       v <- makeVariable()
     } yield { (h1, h2) =>
       for {
@@ -203,7 +184,6 @@ class EnglishGraphInterpreter extends GraphInterpreter {
   def countNounPhrase(w: Int): Interpret[(Handle, Handle, Variable)] = {
     for {
       _ <- guardTokenHasTag(w, EnglishWordTags.CountNoun)
-      // root <- nounRoot(w)
       npRel <- getLabel(w)
       makeQuantifier <- determinerFrom(w)
       makeAdjectives <- adjectivesFrom(w)
@@ -219,8 +199,19 @@ class EnglishGraphInterpreter extends GraphInterpreter {
     } yield (qh2, quantifierHandle, quantifierVariable)
   }
 
-  def pronounPhrase(w: Int): Interpret[(Handle, Handle, Variable)] =
-    fail() // TODO
+  def pronounPhrase(w: Int): Interpret[(Handle, Handle, Variable)] = {
+    for {
+      _ <- guardTokenHasTag(w, EnglishWordTags.Pronoun)
+      person <- collectFirstTag(w) { case EnglishWordTags.Person(p) => p } 
+      plural <- tokenHasTag(w, EnglishWordTags.Plural)
+      v <- makeVariable()
+      h0 <- makeHandle()
+      _ <- addRelation(h0, Relation.Pronoun(person, plural, v))
+      h1 <- makeHandle()
+      h2 <- makeHandle()
+      _ <- addRelation(h1, Relation.Quantifier("implicit", v, h0, h2))
+    } yield (h2, h1, v)
+  }
 
   def massNounPhrase(w: Int): Interpret[(Handle, Handle, Variable)] =
     fail() // TODO
