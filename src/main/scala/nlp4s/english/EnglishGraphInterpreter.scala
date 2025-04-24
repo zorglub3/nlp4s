@@ -19,7 +19,9 @@ class EnglishGraphInterpreter extends GraphInterpreter {
   import EnglishLinkTags._
   import EnglishWordTags._
 
-  def getLabel(position: Int): Interpret[String] =
+  type Label = String
+
+  def getLabel(position: Int): Interpret[Label] =
     collectFirstTag(position) { case EnglishWordTags.Label(l) => l }
 
   def verbTense(w: Int): Interpret[Tense] =
@@ -31,38 +33,74 @@ class EnglishGraphInterpreter extends GraphInterpreter {
   def nounRoot(w: Int): Interpret[String] =
     collectFirstTag(w) { case EnglishWordTags.NounRoot(root) => root }
 
-  def simpleTense(w: Int): Interpret[(Mode, Tense)] = {
+  def simpleTense(w: Int): Interpret[(Mode, Tense, Label)] = {
     for {
       _ <- guardEmpty(graphEdgeFrom(EnglishLinkTags.T, w))
       _ <- guardEmpty(graphEdgeFrom(EnglishLinkTags.H, w))
       _ <- graphEdgeFrom(EnglishLinkTags.S, w) <+> graphEdgeFrom(EnglishLinkTags.Qs, w)
       tense <- verbTense(w)
-    } yield (Mode.Declarative, tense)
+      label <- getLabel(w)
+    } yield (Mode.Declarative, tense, label)
   }
     
-  def imperativeTense(w: Int): Interpret[(Mode, Tense)] = {
+  def imperativeTense(w: Int): Interpret[(Mode, Tense, Label)] = {
     for {
       _ <- guardEmpty(graphEdgeFrom(EnglishLinkTags.S, w))
       _ <- graphEdgeFrom(EnglishLinkTags.W, w)
       _ <- guardTokenHasTag(w, EnglishWordTags.RootForm)
-    } yield (Mode.Imperative, Tense.Present)
+      label <- getLabel(w)
+    } yield (Mode.Imperative, Tense.Present, label)
   }
 
-  def futureTense(w: Int): Interpret[(Mode, Tense)] = {
-    // TODO check that subject/help-verb position
-    // - is it interrogative or declarative
-
+  def futureTense(w: Int): Interpret[(Mode, Tense, Label)] = {
     for {
       h <- graphEdgeFrom(EnglishLinkTags.H, w)
       s <- graphEdgeFrom(EnglishLinkTags.S, w)
       r <- verbRoot(h)
       _ <- guard(r == "will")
       _ <- guardTokenHasTag(w, EnglishWordTags.RootForm)
-    } yield (if(h < s) Mode.Interrogative else Mode.Declarative, Tense.Future)
+      label <- getLabel(w)
+    } yield (if(h < s) Mode.Interrogative else Mode.Declarative, Tense.Future, label)
   }
 
-  def verbPhraseTense(w: Int): Interpret[(Mode, Tense)] =
-    simpleTense(w) <+> imperativeTense(w) <+> futureTense(w)
+  def progressiveTense(w: Int): Interpret[(Mode, Tense, Label)] = {
+    for {
+      h <- graphEdgeFrom(EnglishLinkTags.T, w)
+      s <- graphEdgeFrom(EnglishLinkTags.S, w)
+      r <- verbRoot(w)
+      _ <- guard(r == "be")
+      _ <- guardTokenHasTag(h, EnglishWordTags.WordTense(Tense.PresentParticiple))
+      t <- collectFirstTag(w) { 
+        case EnglishWordTags.WordTense(Tense.Present) => Tense.PresentProgressive
+        case EnglishWordTags.WordTense(Tense.Past) => Tense.PastProgressive
+      }
+      label <- getLabel(h)
+    } yield (if(w < s) Mode.Interrogative else Mode.Declarative, t, label)
+  }
+
+  def futureProgressiveTense(w: Int): Interpret[(Mode, Tense, Label)] = {
+    for {
+      h <- graphEdgeFrom(EnglishLinkTags.T, w)
+      s <- graphEdgeFrom(EnglishLinkTags.S, w)
+      x <- graphEdgeFrom(EnglishLinkTags.H, w)
+      xr <- verbRoot(x)
+      wr <- verbRoot(w)
+      _ <- guard(wr == "be")
+      _ <- guard(xr == "will")
+      _ <- guardTokenHasTag(w, EnglishWordTags.WordTense(Tense.PresentParticiple))
+      _ <- guardTokenHasTag(h, EnglishWordTags.RootForm)
+      _ <- guardTokenHasTag(x, EnglishWordTags.RootForm)
+      label <- getLabel(h)
+    } yield (if(x < s) Mode.Interrogative else Mode.Declarative, Tense.FutureProgressive, label)
+  }
+
+  def verbPhraseTense(w: Int): Interpret[(Mode, Tense, Label)] = {
+    simpleTense(w) <+> 
+    imperativeTense(w) <+> 
+    futureTense(w) <+> 
+    progressiveTense(w) <+> 
+    futureProgressiveTense(w)
+  }
 
   def negation(w: Int): Interpret[Boolean] = 
     (graphEdgeFrom(EnglishLinkTags.N, w) >> pure(true)) <+> pure(false)
@@ -72,10 +110,11 @@ class EnglishGraphInterpreter extends GraphInterpreter {
 
   def verb(w: Int): Interpret[BuildVerbRelation] = {
     for {
-      label <- getLabel(w)
+      // label <- getLabel(w)
       t <- verbPhraseTense(w)
       mode = t._1
       tense = t._2
+      label = t._3
       n <- negation(w)
     } yield {
       case (None, Some(obj), Some(biObj)) if mode == Mode.Imperative => {
@@ -148,7 +187,10 @@ class EnglishGraphInterpreter extends GraphInterpreter {
       _ <- guardTokenHasTag(mainVerb, Verb)
       vf <- verb(mainVerb)
       subj <- toOption(nounPhraseFrom(EnglishLinkTags.S, mainVerb))
-      obj <- toOption(nounPhraseFrom(EnglishLinkTags.O, mainVerb))
+      obj <- toOption { 
+        nounPhraseFrom(EnglishLinkTags.O, mainVerb) <+>
+        (graphEdgeFrom(EnglishLinkTags.T, mainVerb) >>= (x => nounPhraseFrom(EnglishLinkTags.O, x)))
+      }
       handle <- vf(subj.map(_._3), obj.map(_._3), None)
       top <- getMRSTop()
       _ <- optional(subj.map { s => addConstraint(s._1, handle) andThen addConstraint(top, s._1) })

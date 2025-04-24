@@ -110,7 +110,6 @@ abstract class Realiser {
         for {
           rels <- collectRelationsRec(x, rstr)
           _ <- push(x -> (q::rels))
-          _ = println(s"xxx: ${q::rels}")
           _ <- tellRecRelation(body2)
           _ <- pop()
         } yield ()

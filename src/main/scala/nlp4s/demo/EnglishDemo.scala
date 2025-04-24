@@ -1,6 +1,7 @@
 package nlp4s.demo
 
 import nlp4s.base.NlpResult
+import nlp4s.base.GenericError
 import nlp4s.english._
 import nlp4s.english.std._
 import nlp4s.mrs.MRS
@@ -50,7 +51,13 @@ class EnglishDemo {
       parse <- parser.run(tokens)
       mrs <- interpreter.runMany(tokens, parse)
       ast = quantifierScope.resolve(mrs.head)
-      words <- realiser.run(List(Clause.MRSClause(ast.head)))
+      words <- {
+        if(ast.isEmpty) {
+          Left(GenericError("Could not resolve quantifier scopes"))
+        } else {
+          realiser.run(List(Clause.MRSClause(ast.head)))
+        }
+      }
     } yield words
   }
 }

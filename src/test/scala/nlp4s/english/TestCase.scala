@@ -44,6 +44,8 @@ object TestCase {
       TestCase("he she it runs", 0, 4, false),
       TestCase("we pick up the women", 1, 4, false),
       TestCase("he will run to the table", 1, 6, false),
+      TestCase("he will be running", 1, 4, false),
+      TestCase("will he be taking the table", 1, 6, false),
       TestCase("will he run to the table", 1, 6, false),
       TestCase("he will ran to the table", 0, 6, false),
       TestCase("he will runs to the table", 0, 6, false),

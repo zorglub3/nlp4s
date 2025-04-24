@@ -6,7 +6,7 @@ import nlp4s.demo.EnglishDemo
 
 class InterpreterSpec extends AnyFlatSpec with Matchers {
   // Dummy rule to make scalatest work nicely with generated test cases
-  "An English parser" should "dummy" in {
+  "An English interpreter" should "dummy" in {
     true shouldBe true
   }
 
