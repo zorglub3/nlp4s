@@ -27,9 +27,11 @@ All parts are still work in progress. A demo can be used from the sbt console.
   yields two identical parse graphs - should be only one).
 - Negation. Completely missing from `EnglishGraphInterpreter` and realiser.
 - Parse future progressive, eg, "I will be taking the fork".
-- Bug in interpretation of imperative sentences. The English graph interpreter does not produce
-  a valid MRS.
 - Port more tests from the old nlp library.
+- Quantifier scope resolution:
+  1. It should work for _all_ valid MRS representations (never give empty answer)
+  2. Write test suite
+  3. Make it possible to give preferred/default ordering on quantifiers
 
 # References and related work
 

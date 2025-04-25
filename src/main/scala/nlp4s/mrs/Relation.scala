@@ -253,12 +253,12 @@ object Relation {
       QuantifierScope.pure(VerbTense(tense, arg0))
   }
 
-  case class ImplicitImperative[H](
+  case class Implicit[H](
     variable: Variable,
-  ) extends Relation[H]("implicit_imperative", List.empty, List(variable), List.empty) {
-    def mapH[I](f: H => I): Relation[I] = ImplicitImperative(variable)
+  ) extends Relation[H]("implicit", List.empty, List(variable), List.empty) {
+    def mapH[I](f: H => I): Relation[I] = Implicit(variable)
 
     private[mrs] def flatMapH[I](f: H => QuantifierScope.F[I]): QuantifierScope.F[Relation[I]] =
-      QuantifierScope.pure(ImplicitImperative(variable))
+      QuantifierScope.pure(Implicit(variable))
   }
 }

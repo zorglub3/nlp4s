@@ -80,7 +80,7 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
     val imperative: F[NPGrammar] =
       for {
         relations <- variableRelations(v)
-        imperative <- liftOption(relations.collectFirst { case ImplicitImperative(u) if v == u => true })
+        imperative <- liftOption(relations.collectFirst { case Implicit(u) if v == u => true })
       } yield ImperativeNP 
   
     lazy val properNP: F[NPGrammar] = 

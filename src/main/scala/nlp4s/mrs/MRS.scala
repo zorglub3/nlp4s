@@ -3,7 +3,7 @@ package nlp4s.mrs
 case class MRS(
   hook: MRS.Hook,
   eps: Map[Handle, List[Relation[Handle]]],
-  constraints: Map[Handle, Constraint],
+  constraints: Set[Constraint],
 ) {
   def globalTop = hook.globalTop
   def localTop = hook.localTop
@@ -11,7 +11,7 @@ case class MRS(
   def globalRelations = hook.globalPredicates
 
   def allHandles: Set[Handle] = 
-    (eps.keys ++ constraints.keys).toSet + globalTop + localTop
+    (eps.keys ++ constraints.map { _.src }).toSet + globalTop + localTop
 
   def floatingEps: Set[Handle] = {
     allHandles.filter { h => 
@@ -48,7 +48,7 @@ object MRS {
     val (hg1, h0) = hg.generate()
     val vg = Variable.initGenerator
 
-    Builder(hg1, vg, h0, Map.empty, Map.empty, Set.empty, Set.empty)
+    Builder(hg1, vg, h0, Map.empty, Set.empty, Set.empty, Set.empty)
   }
 
   case class Builder(
@@ -56,7 +56,7 @@ object MRS {
     variableGenerator: Variable.Generator,
     top: Handle, 
     eps: Map[Handle, List[Relation[Handle]]],
-    constraints: Map[Handle, Constraint],
+    constraints: Set[Constraint],
     globalVariables: Set[Variable],
     globalRelations: Set[Relation[Handle]],
   ) {
@@ -85,7 +85,7 @@ object MRS {
       copy(eps = eps + (handle -> relations))
 
     def addQeqConstraint(src: Handle, target: Handle): Builder =
-      copy(constraints = constraints + (src -> Constraint(target)))
+      copy(constraints = constraints + Constraint(src, target))
 
     def result(): MRS = 
       MRS(
@@ -110,7 +110,7 @@ object MRS {
     println(s"  global top:    ${mrs.globalTop.asString}")
     println(s"  local top:     ${mrs.localTop.asString}")
     println(s"  relations:   { ${mrs.eps.map { case (k, v) => s"${k.asString}: (${v.map(pr).mkString(", ")})" } .mkString(",\n                 ")} }")
-    println(s"  constraints: { ${mrs.constraints.map { case (k, Constraint(v)) => s"${k.asString} =_q ${v.asString}" } .mkString(",\n                 ")} }")
+    println(s"  constraints: { ${mrs.constraints.map { case Constraint(s, t) => s"${s.asString} =_q ${t.asString}" } .mkString(",\n                 ")} }")
     println(s"  variables:   { ${mrs.globalVariables.map { _.name } .mkString(", ")} }")
     println(s"  t-relations: { ${mrs.globalRelations.map(pr).mkString(", ")} }")
     println(">")

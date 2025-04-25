@@ -177,6 +177,17 @@ class EnglishGraphInterpreter extends GraphInterpreter {
     }
   }
 
+  def implicitNounPhrase(): Interpret[(Handle, Handle, Variable)] = {
+    for {
+      h0 <- makeHandle()
+      h1 <- makeHandle()
+      h2 <- makeHandle()
+      v  <- makeVariable()
+      _  <- addRelation(h0, Relation.Implicit(v))
+      _  <- addRelation(h1, Relation.Quantifier("implicit", v, h0, h2))
+    } yield (h2, h1, v)
+  }
+
   // TODO - support for bi-transitive verbs (parse second object)
   // TODO - support for adverbs and prepositions
   // TODO - variables for verb-relations and add tense- and mode-predicates to those
@@ -188,12 +199,19 @@ class EnglishGraphInterpreter extends GraphInterpreter {
       subj <- toOption(nounPhraseFrom(EnglishLinkTags.S, mainVerb))
       obj <- toOption { 
         nounPhraseFrom(EnglishLinkTags.O, mainVerb) <+>
-        (graphEdgeFrom(EnglishLinkTags.T, mainVerb) >>= (x => nounPhraseFrom(EnglishLinkTags.O, x)))
+        (  
+          graphEdgeFrom(EnglishLinkTags.T, mainVerb) >>= 
+          (x => nounPhraseFrom(EnglishLinkTags.O, x))
+        )
       }
       handle <- vf(subj.map(_._3), obj.map(_._3), None)
       top <- getMRSTop()
-      _ <- optional(subj.map { s => addConstraint(s._1, handle) andThen addConstraint(top, s._1) })
-      _ <- optional(obj.map { o => addConstraint(o._1, handle) andThen addConstraint(top, o._1) })
+      subj2 <- fromOption(subj) <+> implicitNounPhrase()
+      _ <- addConstraint(subj2._1, handle)
+      _ <- addConstraint(top, subj2._2)
+      _ <- optional(obj.map { o => 
+        addConstraint(o._1, handle) andThen addConstraint(top, o._2) 
+      })
     } yield ()
   }
 

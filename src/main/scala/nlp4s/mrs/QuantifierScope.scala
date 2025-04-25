@@ -18,11 +18,11 @@ class QuantifierScope {
 
   def getConstrainedEP(h: Handle): F[Relation.Recursive] = {
     for {
-      constraint <- inspectF { _.constraints.get(h).toList }
-      _ <- modifyState { s => s.copy(constraints = s.constraints - h) }
+      constraint <- inspectF { _.constraints.filter { _.src == h } .toList }
+      _ <- modifyState { s => s.copy(constraints = s.constraints - constraint) }
       _ <- modifyState { _.removeTarget(h) }
       h <- inspectF { _.floating.keys.toList }
-      rel <- withTarget(constraint.handle) { resolveRec(h) }
+      rel <- withTarget(constraint.tgt) { resolveRec(h) }
     } yield rel
   }
 
@@ -60,7 +60,7 @@ object QuantifierScope {
     targets: Set[Handle],
     eps: Map[Handle, List[Relation[Handle]]],
     floating: Map[Handle, List[Relation[Handle]]],
-    constraints: Map[Handle, Constraint]
+    constraints: Set[Constraint]
   ) {
     def addVariables(vs: Seq[Variable]): QuantifierState =
       copy(variables = variables ++ vs)
