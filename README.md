@@ -21,6 +21,16 @@ processing natural language somehow. Currently, it consists of the following par
 
 All parts are still work in progress. A demo can be used from the sbt console.
 
+## Current issues and WIP
+
+- Double parse of sentence "Are they are a group" (using eg `parseString` in the English demo
+  yields two identical parse graphs - should be only one).
+- Negation. Completely missing from `EnglishGraphInterpreter` and realiser.
+- Parse future progressive, eg, "I will be taking the fork".
+- Bug in interpretation of imperative sentences. The English graph interpreter does not produce
+  a valid MRS.
+- Port more tests from the old nlp library.
+
 # References and related work
 
 - [Head-Driven Phrase Structure Grammar: The handbook, Second revised edition.](https://langsci-press.org/catalog/book/478) The guide to HPSG, which "inspires" some parts of this project.

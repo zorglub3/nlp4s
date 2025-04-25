@@ -25,6 +25,7 @@ trait StandardNouns { self: Lexicon.Builder =>
     Noun("sip", "sips", "sips", "sips"),
     Noun("glass", "glasses", "glass", "glasses"),
     Noun("bottle", "bottles", "bottles", "bottles"),
+    Noun("group", "groups", "groups", "groups"),
     MassNoun("water", "waters"),
     MassNoun("middle", "middles"),
   ))

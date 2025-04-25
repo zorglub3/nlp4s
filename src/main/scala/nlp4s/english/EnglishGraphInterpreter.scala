@@ -110,7 +110,6 @@ class EnglishGraphInterpreter extends GraphInterpreter {
 
   def verb(w: Int): Interpret[BuildVerbRelation] = {
     for {
-      // label <- getLabel(w)
       t <- verbPhraseTense(w)
       mode = t._1
       tense = t._2
