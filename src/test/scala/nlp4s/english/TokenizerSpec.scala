@@ -12,7 +12,7 @@ class TokenizerSpec extends AnyFlatSpec with Matchers {
 
   for(testCase <- TestCase.all) {
     if(!testCase.ignore) {
-      it should s"Check that '${testCase.text}' has ${testCase.tokens} token(s)" in {
+      it should s"check that '${testCase.text}' has ${testCase.tokens} token(s)" in {
         val demo = new EnglishDemo
 
         demo.tokenizer.run(testCase.text).map(_.size) shouldBe Right(testCase.tokens + 1)

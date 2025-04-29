@@ -19,7 +19,7 @@ class RoundtripSpec extends AnyFlatSpec with Matchers {
 
   for(testCase <- TestCase.all) {
     if(!testCase.ignore && testCase.parses > 0) {
-      it should s"Do correct roundtrip for '${testCase.text}'" in {
+      it should s"do correct roundtrip for '${testCase.text}'" in {
         val demo = new EnglishDemo
 
         val res = demo.roundTrip(testCase.text).map(makeString)

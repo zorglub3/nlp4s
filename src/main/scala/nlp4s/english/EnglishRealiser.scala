@@ -4,6 +4,7 @@ import nlp4s.base.AdjectiveForm
 import nlp4s.base.Casus
 import nlp4s.base.Mode
 import nlp4s.base.Person
+import nlp4s.base.Gender
 import nlp4s.base.Tense
 import nlp4s.mrs.Relation
 import nlp4s.mrs.Variable
@@ -77,25 +78,25 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
   }
 
   def nounPhraseGrammar(v: Variable): F[NPGrammar] = {
-    val imperative: F[NPGrammar] =
-      for {
-        relations <- variableRelations(v)
-        imperative <- liftOption(relations.collectFirst { case Implicit(u) if v == u => true })
-      } yield ImperativeNP 
-  
-    lazy val properNP: F[NPGrammar] = 
+    val properNP: F[NPGrammar] = 
       for {
         relations <- variableRelations(v)
         quantifier <- liftOption(relations.collectFirst { case q: Quantifier[_] => q })
         plural <- liftOption(wordBook.quantifierPlural(quantifier.name))
       } yield ProperNP(Person.Third, plural)
 
-    val pronounNP: F[NPGrammar] = ???
+    lazy val pronounNP: F[NPGrammar] = 
+      for {
+        relations <- variableRelations(v)
+        pronoun <- liftOption(relations.collectFirst {
+          case p: Pronoun[_] => p
+        })
+      } yield ProperNP(pronoun.person, pronoun.plural)
 
-    imperative <+> properNP <+> pronounNP
+    properNP <+> pronounNP
   }
 
-  def tellNounPhrase(v: Variable, casus: Casus): F[Unit] = {
+  def tellProperNounPhrase(v: Variable, casus: Casus): F[Unit] = {
     for {
       rels <- variableRelations(v)
       quantifier <- liftOption(rels.collectFirst { case q: Quantifier[_] => q })
@@ -111,14 +112,57 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
     } yield ()
   }
 
+  def pronounWord(
+    person: Person, 
+    plural: Boolean, 
+    gender: Option[Gender], 
+    casus: Casus
+  ): F[String] = {
+    import Person._
+    import Casus._
+    import Gender._
+
+    liftOption(
+      (person, plural, gender, casus) match {
+        case (First, false, _, Nominative) => Some("I")
+        case (Second, false, _, Nominative) => Some("you")
+        case (Third, false, Some(Masculine), Nominative) => Some("he")
+        case (Third, false, Some(Feminine), Nominative) => Some("she")
+        case (Third, false, _, Nominative) => Some("it")
+        case (First, true, _, Nominative) => Some("we")
+        case (Second, true, _, Nominative) => Some("you")
+        case (Third, true, _, Nominative) => Some("they")
+        case (First, false, _, Accusative) => Some("me")
+        case (Second, false, _, Accusative) => Some("you")
+        case (Third, false, Some(Masculine), Accusative) => Some("him")
+        case (Third, false, Some(Feminine), Accusative) => Some("her")
+        case (Third, false, _, Accusative) => Some("it")
+        case (First, true, _, Accusative) => Some("us")
+        case (Second, true, _, Accusative) => Some("you")
+        case (Third, true, _, Accusative) => Some("them")
+        case _ => None
+      }
+    )
+  }
+
+  def tellPronounPhrase(v: Variable, casus: Casus): F[Unit] = {
+    for {
+      rels <- variableRelations(v)
+      pronoun <- liftOption(rels.collectFirst { case p: Pronoun[_] => p })
+      word <- pronounWord(pronoun.person, pronoun.plural, pronoun.gender, casus)
+      _ <- tell(word)
+    } yield ()
+  }
+
+  def tellNounPhrase(v: Variable, casus: Casus): F[Unit] = {
+    tellProperNounPhrase(v, casus) <+> tellPronounPhrase(v, casus)
+  }
+
   def tellImperative(rel: Relation[Recursive] with VerbRelation[_]): F[Unit] = {
-    val subject = rel.args.head
     val args = rel.args.tail
 
     for {
-      tense <- verbTense(rel.variable)
-      grammar <- nounPhraseGrammar(subject)
-      _ <- tellVerb(rel.name, grammar, Tense.BareInfinitive)
+      _ <- tellVerb(rel.name, ImperativeNP, Tense.BareInfinitive)
       _ <- args.map(tellNounPhrase(_, Casus.Accusative)).sequence
     } yield ()
   }

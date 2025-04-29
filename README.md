@@ -23,8 +23,6 @@ All parts are still work in progress. A demo can be used from the sbt console.
 
 ## Current issues and WIP
 
-- realise imperative sentences. Use '!' for punctuation even? (English realiser)
-- realise pronouns in sentences. (English realiser)
 - Double parse of sentence "Are they are a group" (using eg `parseString` in the English demo
   yields two identical parse graphs - should be only one).
 - Negation. Completely missing from `EnglishGraphInterpreter` and realiser.
@@ -34,6 +32,7 @@ All parts are still work in progress. A demo can be used from the sbt console.
   1. It should work for _all_ valid MRS representations (never give empty answer)
   2. Write test suite
   3. Make it possible to give preferred/default ordering on quantifiers
+- Interpret and realise adjectives, adverbs and prepositions
 
 # References and related work
 

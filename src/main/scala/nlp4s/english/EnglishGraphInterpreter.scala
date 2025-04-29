@@ -265,9 +265,10 @@ class EnglishGraphInterpreter extends GraphInterpreter {
       _ <- guardTokenHasTag(w, EnglishWordTags.Pronoun)
       person <- collectFirstTag(w) { case EnglishWordTags.Person(p) => p } 
       plural <- tokenHasTag(w, EnglishWordTags.Plural)
+      gender <- collectTag(w) { case EnglishWordTags.Gender(g) => g } .map { _.headOption }
       v <- makeVariable()
       h0 <- makeHandle()
-      _ <- addRelation(h0, Relation.Pronoun(person, plural, v))
+      _ <- addRelation(h0, Relation.Pronoun(person, plural, gender, v))
       h1 <- makeHandle()
       h2 <- makeHandle()
       _ <- addRelation(h1, Relation.Quantifier("implicit", v, h0, h2))
