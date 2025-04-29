@@ -9,6 +9,7 @@ import nlp4s.mrs.QuantifierScope
 import nlp4s.parser.Parser
 import nlp4s.tokenizer.Tokenizer
 import nlp4s.realiser.Clause
+import nlp4s.printer.StringPrinter
 
 class EnglishDemo {
   val lexiconBuilder = {
@@ -29,6 +30,7 @@ class EnglishDemo {
   val interpreter = new EnglishGraphInterpreter
   val quantifierScope = new QuantifierScope
   val realiser = new EnglishRealiser(lexicon.wordBook)
+  val printer = new StringPrinter
 
   def parseString(s: String): NlpResult[List[Parser.Output]] = {
     for {
@@ -59,6 +61,22 @@ class EnglishDemo {
         }
       }
     } yield words
+  }
+
+  def roundTripString(s: String): NlpResult[String] = {
+    for {
+      tokens <- tokenizer.run(s)
+      parse <- parser.run(tokens)
+      mrs <- interpreter.runMany(tokens, parse)
+      ast = quantifierScope.resolve(mrs.head)
+      words <- {
+        if(ast.isEmpty) {
+          Left(GenericError("Could not resolve quantifier scopes"))
+        } else {
+          realiser.run(List(Clause.MRSClause(ast.head)))
+        }
+      }
+    } yield printer.writeMkString(words)
   }
 }
 

@@ -23,6 +23,8 @@ All parts are still work in progress. A demo can be used from the sbt console.
 
 ## Current issues and WIP
 
+- realise imperative sentences. Use '!' for punctuation even? (English realiser)
+- realise pronouns in sentences. (English realiser)
 - Double parse of sentence "Are they are a group" (using eg `parseString` in the English demo
   yields two identical parse graphs - should be only one).
 - Negation. Completely missing from `EnglishGraphInterpreter` and realiser.

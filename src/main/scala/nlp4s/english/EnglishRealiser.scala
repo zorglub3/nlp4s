@@ -90,9 +90,9 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
         plural <- liftOption(wordBook.quantifierPlural(quantifier.name))
       } yield ProperNP(Person.Third, plural)
 
-    // val pronounNP: F[NPGrammar] = ???
+    val pronounNP: F[NPGrammar] = ???
 
-    imperative <+> properNP // <+> pronounNP
+    imperative <+> properNP <+> pronounNP
   }
 
   def tellNounPhrase(v: Variable, casus: Casus): F[Unit] = {
@@ -112,7 +112,15 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
   }
 
   def tellImperative(rel: Relation[Recursive] with VerbRelation[_]): F[Unit] = {
-    ???
+    val subject = rel.args.head
+    val args = rel.args.tail
+
+    for {
+      tense <- verbTense(rel.variable)
+      grammar <- nounPhraseGrammar(subject)
+      _ <- tellVerb(rel.name, grammar, Tense.BareInfinitive)
+      _ <- args.map(tellNounPhrase(_, Casus.Accusative)).sequence
+    } yield ()
   }
 
   def tellInterrogative(rel: Relation[Recursive] with VerbRelation[_]): F[Unit] = {

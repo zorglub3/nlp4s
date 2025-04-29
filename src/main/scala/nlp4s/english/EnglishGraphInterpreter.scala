@@ -106,7 +106,7 @@ class EnglishGraphInterpreter extends GraphInterpreter {
     (graphEdgeFrom(EnglishLinkTags.N, w) >> pure(true)) <+> pure(false)
 
   type BuildVerbRelation = 
-    (Option[Variable], Option[Variable], Option[Variable]) => Interpret[Handle]
+    (Variable, Option[Variable], Option[Variable]) => Interpret[Handle]
 
   def verb(w: Int): Interpret[BuildVerbRelation] = {
     for {
@@ -116,6 +116,7 @@ class EnglishGraphInterpreter extends GraphInterpreter {
       label = t._3
       n <- negation(w)
     } yield {
+      /*
       case (None, Some(obj), Some(biObj)) if mode == Mode.Imperative => {
         for {
           v <- makeVariable() // TODO add relation on v - imperative
@@ -146,7 +147,8 @@ class EnglishGraphInterpreter extends GraphInterpreter {
           _ <- addRelation(h, Relation.IntransitiveVerb(u, label, v))
         } yield h
       }
-      case (Some(subj), Some(obj), Some(biObj)) => {
+      */
+      case (subj, Some(obj), Some(biObj)) => {
         for {
           u <- makeGlobalVariable()
           _ <- addGlobalRelation(Relation.VerbMode(mode, u))
@@ -155,7 +157,7 @@ class EnglishGraphInterpreter extends GraphInterpreter {
           _ <- addRelation(h, Relation.BitransitiveVerb(u, label, subj, obj, biObj))
         } yield h
       }
-      case (Some(subj), Some(obj), None) => {
+      case (subj, Some(obj), None) => {
         for {
           u <- makeGlobalVariable()
           _ <- addGlobalRelation(Relation.VerbMode(mode, u))
@@ -164,7 +166,7 @@ class EnglishGraphInterpreter extends GraphInterpreter {
           _ <- addRelation(h, Relation.TransitiveVerb(u, label, subj, obj))
         } yield h
       }
-      case (Some(subj), None, _) => {
+      case (subj, None, _) => {
         for {
           u <- makeGlobalVariable()
           _ <- addGlobalRelation(Relation.VerbMode(mode, u))
@@ -204,9 +206,9 @@ class EnglishGraphInterpreter extends GraphInterpreter {
           (x => nounPhraseFrom(EnglishLinkTags.O, x))
         )
       }
-      handle <- vf(subj.map(_._3), obj.map(_._3), None)
-      top <- getMRSTop()
       subj2 <- fromOption(subj) <+> implicitNounPhrase()
+      handle <- vf(subj2._3, obj.map(_._3), None)
+      top <- getMRSTop()
       _ <- addConstraint(subj2._1, handle)
       _ <- addConstraint(top, subj2._2)
       _ <- optional(obj.map { o => 
