@@ -6,6 +6,7 @@ import nlp4s.english.lexicon._
 trait StandardAdjectives { self: Lexicon.Builder =>
   addEntries(List(
     Adjective("big", "bigger", "biggest"),
+    Adjective("large", "larger", "largest"),
     Adjective("tall", "taller", "tallest"),
     Adjective("warm", "warmer", "warmest"),
     Adjective("cold", "colder", "coldest"),

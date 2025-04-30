@@ -121,6 +121,8 @@ object Relation {
       QuantifierScope.pure(Adjective(adjectiveName, variable))
   }
 
+  // adjective that describes a relation between two entities, eg, 
+  // 'x is bigger than y'
   case class AdjectiveRelation[H](
     adjectiveName: String,
     variable1: Variable,

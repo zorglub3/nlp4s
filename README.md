@@ -32,7 +32,7 @@ All parts are still work in progress. A demo can be used from the sbt console.
   1. It should work for _all_ valid MRS representations (never give empty answer)
   2. Write test suite
   3. Make it possible to give preferred/default ordering on quantifiers
-- Interpret and realise adjectives, adverbs and prepositions
+- Interpret and realise adverbs and prepositions
 
 # References and related work
 

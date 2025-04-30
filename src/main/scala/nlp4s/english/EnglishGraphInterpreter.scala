@@ -234,11 +234,38 @@ class EnglishGraphInterpreter extends GraphInterpreter {
 
   type MakeRelations = Variable => List[Relation[Handle]]
 
+  def walkAdjectives(w: Int): Interpret[List[Int]] = {
+    (graphEdgeLeft(EnglishLinkTags.J, w) >>= { x =>
+      walkAdjectives(x) >>= { y => pure(x :: y) }
+    }) <+> pure(List.empty)
+  }
+
   def adjectivesFrom(w: Int): Interpret[MakeRelations] = {
-    pure(_ => List.empty)
+    for {
+      adjPos <- walkAdjectives(w).map(_.reverse)
+      labels <- adjPos.map(collectFirstTag(_) { 
+        case EnglishWordTags.AdjectiveRoot(label) => label
+      } ).sequence
+    } yield { v => labels.map(Relation.Adjective(_, v)) }
+  }
+
+  type MakePreposition = Variable => Interpret[Relation[Handle]]
+
+  def walkPrepositions(w: Int): Interpret[List[Int]] = {
+    (graphEdgeRight(EnglishLinkTags.P, w) >>= { x =>
+      walkPrepositions(x) >>= { y => pure(x :: y) }
+    }) <+> pure(List.empty)
+  }
+
+  def prepositionMaker(w: Int): Interpret[MakePreposition] = {
+    // TODO work in progress
+
+    ???
   }
 
   def prepositionsFrom(w: Int): Interpret[MakeRelations] = {
+    // TODO work in progress
+
     pure(_ => List.empty)
   }
 
@@ -278,11 +305,12 @@ class EnglishGraphInterpreter extends GraphInterpreter {
   def massNounPhrase(w: Int): Interpret[(Handle, Handle, Variable)] =
     fail() // TODO
 
+  def nounPhrase(w: Int): Interpret[(Handle, Handle, Variable)] = {
+    countNounPhrase(w) <+> pronounPhrase(w) <+> massNounPhrase(w)
+  }
+
   def nounPhraseFrom(tag: LinkTag, verb: Int): Interpret[(Handle, Handle, Variable)] = {
-    for {
-      n <- graphEdgeFrom(tag, verb)
-      np <- countNounPhrase(n) <+> pronounPhrase(n) <+> massNounPhrase(n)
-    } yield np
+    graphEdgeFrom(tag, verb) >>= nounPhrase
   }
 
   def statement: Interpret[Unit] = {
