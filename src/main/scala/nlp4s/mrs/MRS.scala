@@ -87,6 +87,8 @@ object MRS {
     def addQeqConstraint(src: Handle, target: Handle): Builder =
       copy(constraints = constraints + Constraint(src, target))
 
+    def getTop(): Handle = top
+
     def result(): MRS = 
       MRS(
         Hook(top, top, None, globalVariables, globalRelations),

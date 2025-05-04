@@ -29,6 +29,9 @@ class GraphInterpreter {
     InterpreterState(words, wordTags, graph, MRS.newBuilder)
   }
 
+  def getTop(): Interpret[Handle] =
+    StateT.inspect(_.mrsBuilder.getTop())
+
   def word(position: Int): Interpret[String] = 
     StateT.inspect(_.words(position))
 

@@ -105,81 +105,42 @@ class EnglishGraphInterpreter extends GraphInterpreter {
   def negation(w: Int): Interpret[Boolean] = 
     (graphEdgeFrom(EnglishLinkTags.N, w) >> pure(true)) <+> pure(false)
 
-  type BuildVerbRelation = 
-    (Variable, Option[Variable], Option[Variable]) => Interpret[Handle]
+  // type BuildVerbRelation = 
+    // (Variable, Option[Variable], Option[Variable]) => Interpret[Handle]
 
-  def verb(w: Int): Interpret[BuildVerbRelation] = {
+  def verb(
+    w: Int, 
+    h: Handle, 
+    subj: Variable, 
+    obj: Option[Variable],
+    biObj: Option[Variable],
+  ): Interpret[Unit] = {
     for {
       t <- verbPhraseTense(w)
       mode = t._1
       tense = t._2
       label = t._3
       n <- negation(w)
-    } yield {
-      /*
-      case (None, Some(obj), Some(biObj)) if mode == Mode.Imperative => {
-        for {
-          v <- makeVariable() // TODO add relation on v - imperative
-          u <- makeGlobalVariable()
-          _ <- addGlobalRelation(Relation.VerbMode(mode, u))
-          _ <- addGlobalRelation(Relation.VerbTense(tense, u))
-          h <- makeHandle()
-          _ <- addRelation(h, Relation.BitransitiveVerb(u, label, v, obj, biObj))
-        } yield h
-      }
-      case (None, Some(obj), None) if mode == Mode.Imperative => {
-        for {
-          v <- makeVariable() // TODO add relation on v - imperative
-          u <- makeGlobalVariable()
-          _ <- addGlobalRelation(Relation.VerbMode(mode, u))
-          _ <- addGlobalRelation(Relation.VerbTense(tense, u))
-          h <- makeHandle()
-          _ <- addRelation(h, Relation.TransitiveVerb(u, label, v, obj))
-        } yield h 
-      }
-      case (None, None, _) if mode == Mode.Imperative => {
-        for {
-          v <- makeVariable() // TODO add relation on v - imperative
-          u <- makeGlobalVariable()
-          _ <- addGlobalRelation(Relation.VerbMode(mode, u))
-          _ <- addGlobalRelation(Relation.VerbTense(tense, u))
-          h <- makeHandle()
-          _ <- addRelation(h, Relation.IntransitiveVerb(u, label, v))
-        } yield h
-      }
-      */
-      case (subj, Some(obj), Some(biObj)) => {
-        for {
-          u <- makeGlobalVariable()
-          _ <- addGlobalRelation(Relation.VerbMode(mode, u))
-          _ <- addGlobalRelation(Relation.VerbTense(tense, u))
-          h <- makeHandle()
-          _ <- addRelation(h, Relation.BitransitiveVerb(u, label, subj, obj, biObj))
-        } yield h
-      }
-      case (subj, Some(obj), None) => {
-        for {
-          u <- makeGlobalVariable()
-          _ <- addGlobalRelation(Relation.VerbMode(mode, u))
-          _ <- addGlobalRelation(Relation.VerbTense(tense, u))
-          h <- makeHandle()
-          _ <- addRelation(h, Relation.TransitiveVerb(u, label, subj, obj))
-        } yield h
-      }
-      case (subj, None, _) => {
-        for {
-          u <- makeGlobalVariable()
-          _ <- addGlobalRelation(Relation.VerbMode(mode, u))
-          _ <- addGlobalRelation(Relation.VerbTense(tense, u))
-          h <- makeHandle()
-          _ <- addRelation(h, Relation.IntransitiveVerb(u, label, subj))
-        } yield h
-      }
-      case _ => fail() 
-    }
+      u <- makeGlobalVariable()
+      _ <- addGlobalRelation(Relation.VerbMode(mode, u))
+      _ <- addGlobalRelation(Relation.VerbTense(tense, u))
+      rel <- { (subj, obj, biObj) match {
+        case (s, Some(o), Some(bo)) => {
+          pure[Relation[Handle]](Relation.BitransitiveVerb(u, label, s, o, bo))
+        }
+        case (s, Some(o), None) => {
+          pure[Relation[Handle]](Relation.TransitiveVerb(u, label, s, o))
+        }
+        case (s, None, None) => {
+          pure[Relation[Handle]](Relation.IntransitiveVerb(u, label, s))
+        }
+        case _ => fail[Relation[Handle]]()
+      } }
+      _ <- addRelation(h, rel)
+    } yield ()
   }
 
-  def implicitNounPhrase(): Interpret[(Handle, Handle, Variable)] = {
+  def implicitNounPhrase(h: Handle): Interpret[Variable] = {
     for {
       h0 <- makeHandle()
       h1 <- makeHandle()
@@ -187,14 +148,35 @@ class EnglishGraphInterpreter extends GraphInterpreter {
       v  <- makeVariable()
       _  <- addRelation(h0, Relation.Implicit(v))
       _  <- addRelation(h1, Relation.Quantifier("implicit", v, h0, h2))
-    } yield (h2, h1, v)
+      top <- getTop()
+      _ <- addConstraint(top, h1)
+      _ <- addConstraint(h2, h)
+    } yield v
   }
 
   // TODO - support for bi-transitive verbs (parse second object)
   // TODO - support for adverbs and prepositions
   // TODO - variables for verb-relations and add tense- and mode-predicates to those
   //        (see MRS intro doc section 6.1.3)
+
+  def indirectNounPhraseFrom(mainVerb: Int, vpHandle: Handle): Interpret[Variable] = {
+    graphEdgeFrom(EnglishLinkTags.T, mainVerb) >>=
+    { x => nounPhraseFrom(EnglishLinkTags.O, x, vpHandle) }
+  }
+
   def verbPhrase(mainVerb: Int): Interpret[Unit] = {
+    for {
+      _ <- guardTokenHasTag(mainVerb, Verb)
+      vpHandle <- makeHandle()
+      subj <- nounPhraseFrom(EnglishLinkTags.S, mainVerb, vpHandle) <+> implicitNounPhrase(vpHandle)
+      obj <- toOption {
+        nounPhraseFrom(EnglishLinkTags.O, mainVerb, vpHandle) <+> 
+        indirectNounPhraseFrom(mainVerb, vpHandle)
+      }
+      vp <- verb(mainVerb, vpHandle, subj, obj, None) // TODO bi-object
+    } yield ()
+
+    /*
     for {
       _ <- guardTokenHasTag(mainVerb, Verb)
       vf <- verb(mainVerb)
@@ -215,6 +197,7 @@ class EnglishGraphInterpreter extends GraphInterpreter {
         addConstraint(o._1, handle) andThen addConstraint(top, o._2) 
       })
     } yield ()
+    */
   }
 
   type MakeQuantifier = (Handle, Handle) => Interpret[(Handle, Variable)]
@@ -269,7 +252,7 @@ class EnglishGraphInterpreter extends GraphInterpreter {
     pure(_ => List.empty)
   }
 
-  def countNounPhrase(w: Int): Interpret[(Handle, Handle, Variable)] = {
+  def countNounPhrase(w: Int, h: Handle): Interpret[Variable] = {
     for {
       _ <- guardTokenHasTag(w, EnglishWordTags.CountNoun)
       npRel <- getLabel(w)
@@ -284,10 +267,14 @@ class EnglishGraphInterpreter extends GraphInterpreter {
       rh1 <- makeHandle()
       _ <- addRelationBag(rh1, r1)
       _ <- addConstraint(qh1, rh1)
-    } yield (qh2, quantifierHandle, quantifierVariable)
+      top <- getTop()
+      _ <- addConstraint(top, quantifierHandle)
+      _ <- addConstraint(qh2, h)
+    } yield quantifierVariable
+    // } yield (qh2, quantifierHandle, quantifierVariable)
   }
 
-  def pronounPhrase(w: Int): Interpret[(Handle, Handle, Variable)] = {
+  def pronounPhrase(w: Int, h: Handle): Interpret[Variable] = {
     for {
       _ <- guardTokenHasTag(w, EnglishWordTags.Pronoun)
       person <- collectFirstTag(w) { case EnglishWordTags.Person(p) => p } 
@@ -299,18 +286,21 @@ class EnglishGraphInterpreter extends GraphInterpreter {
       h1 <- makeHandle()
       h2 <- makeHandle()
       _ <- addRelation(h1, Relation.Quantifier("implicit", v, h0, h2))
-    } yield (h2, h1, v)
+      top <- getTop()
+      _ <- addConstraint(top, h1)
+      _ <- addConstraint(h2, h)
+    } yield v
   }
 
-  def massNounPhrase(w: Int): Interpret[(Handle, Handle, Variable)] =
+  def massNounPhrase(w: Int, h: Handle): Interpret[Variable] =
     fail() // TODO
 
-  def nounPhrase(w: Int): Interpret[(Handle, Handle, Variable)] = {
-    countNounPhrase(w) <+> pronounPhrase(w) <+> massNounPhrase(w)
+  def nounPhrase(w: Int, h: Handle): Interpret[Variable] = {
+    countNounPhrase(w, h) <+> pronounPhrase(w, h) <+> massNounPhrase(w, h)
   }
 
-  def nounPhraseFrom(tag: LinkTag, verb: Int): Interpret[(Handle, Handle, Variable)] = {
-    graphEdgeFrom(tag, verb) >>= nounPhrase
+  def nounPhraseFrom(tag: LinkTag, verb: Int, handle: Handle): Interpret[Variable] = {
+    graphEdgeFrom(tag, verb) >>= { x => nounPhrase(x, handle) }
   }
 
   def statement: Interpret[Unit] = {
