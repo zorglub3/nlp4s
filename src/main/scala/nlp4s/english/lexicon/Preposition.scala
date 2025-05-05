@@ -13,7 +13,7 @@ case class Preposition(word: String) extends EnglishLexiconEntry {
     List(
       WordEntry(
         word,
-        List(EnglishWordTags.Preposition),
+        List(EnglishWordTags.Preposition, EnglishWordTags.Label(label)),
         (l(P) & r(R) & opt(r(P))),
       ),
     )

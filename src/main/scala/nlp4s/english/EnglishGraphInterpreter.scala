@@ -215,21 +215,19 @@ class EnglishGraphInterpreter extends GraphInterpreter {
     }
   }
 
-  type MakeRelations = Variable => List[Relation[Handle]]
-
   def walkAdjectives(w: Int): Interpret[List[Int]] = {
     (graphEdgeLeft(EnglishLinkTags.J, w) >>= { x =>
       walkAdjectives(x) >>= { y => pure(x :: y) }
     }) <+> pure(List.empty)
   }
 
-  def adjectivesFrom(w: Int): Interpret[MakeRelations] = {
+  def adjectivesFrom(w: Int, v: Variable): Interpret[List[Relation[Handle]]] = {
     for {
       adjPos <- walkAdjectives(w).map(_.reverse)
-      labels <- adjPos.map(collectFirstTag(_) { 
-        case EnglishWordTags.AdjectiveRoot(label) => label
+      relations <- adjPos.map(collectFirstTag(_) { 
+        case EnglishWordTags.AdjectiveRoot(label) => Relation.Adjective[Handle](label, v)
       } ).sequence
-    } yield { v => labels.map(Relation.Adjective(_, v)) }
+    } yield relations
   }
 
   type MakePreposition = Variable => Interpret[Relation[Handle]]
@@ -240,16 +238,22 @@ class EnglishGraphInterpreter extends GraphInterpreter {
     }) <+> pure(List.empty)
   }
 
-  def prepositionMaker(w: Int): Interpret[MakePreposition] = {
-    // TODO work in progress
-
-    ???
+  def makePreposition(w: Int, v: Variable, h: Handle): Interpret[Relation[Handle]] = {
+    for {
+      _ <- guardTokenHasTag(w, EnglishWordTags.Preposition)
+      ppLabel <- collectFirstTag(w) { case EnglishWordTags.Label(label) => label }
+      n <- graphEdgeFrom(EnglishLinkTags.R, w)
+      npVar <- nounPhrase(n, h)
+    } yield Relation.Preposition(ppLabel, v, npVar)
   }
 
-  def prepositionsFrom(w: Int): Interpret[MakeRelations] = {
-    // TODO work in progress
-
-    pure(_ => List.empty)
+  def prepositionsFrom(w: Int, v: Variable, h: Handle): Interpret[List[Relation[Handle]]] = {
+    for {
+      ppPos <- walkPrepositions(w)
+      _ = println(s"ppPos: $ppPos")
+      relations <- ppPos.map(makePreposition(_, v, h)).sequence
+      _ = println(s"relations: $relations")
+    } yield relations
   }
 
   def countNounPhrase(w: Int, h: Handle): Interpret[Variable] = {
@@ -257,14 +261,14 @@ class EnglishGraphInterpreter extends GraphInterpreter {
       _ <- guardTokenHasTag(w, EnglishWordTags.CountNoun)
       npRel <- getLabel(w)
       makeQuantifier <- determinerFrom(w)
-      makeAdjectives <- adjectivesFrom(w)
-      makePrepositions <- prepositionsFrom(w)
       qh1 <- makeHandle()
       qh2 <- makeHandle()
       p <- makeQuantifier(qh1, qh2)
       (quantifierHandle, quantifierVariable) = p
-      r1 = Relation.CountNoun[Handle](npRel, quantifierVariable) :: (makeAdjectives(quantifierVariable) ++ makePrepositions(quantifierVariable))
       rh1 <- makeHandle()
+      adjectives <- adjectivesFrom(w, quantifierVariable)
+      prepositions <- prepositionsFrom(w, quantifierVariable, rh1)
+      r1 = Relation.CountNoun[Handle](npRel, quantifierVariable) :: (adjectives ++ prepositions)
       _ <- addRelationBag(rh1, r1)
       _ <- addConstraint(qh1, rh1)
       top <- getTop()
