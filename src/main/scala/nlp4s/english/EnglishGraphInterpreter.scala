@@ -105,9 +105,6 @@ class EnglishGraphInterpreter extends GraphInterpreter {
   def negation(w: Int): Interpret[Boolean] = 
     (graphEdgeFrom(EnglishLinkTags.N, w) >> pure(true)) <+> pure(false)
 
-  // type BuildVerbRelation = 
-    // (Variable, Option[Variable], Option[Variable]) => Interpret[Handle]
-
   def verb(
     w: Int, 
     h: Handle, 
@@ -124,6 +121,7 @@ class EnglishGraphInterpreter extends GraphInterpreter {
       u <- makeGlobalVariable()
       _ <- addGlobalRelation(Relation.VerbMode(mode, u))
       _ <- addGlobalRelation(Relation.VerbTense(tense, u))
+      prepositions <- prepositionsFrom(w, u, h)
       rel <- { (subj, obj, biObj) match {
         case (s, Some(o), Some(bo)) => {
           pure[Relation[Handle]](Relation.BitransitiveVerb(u, label, s, o, bo))
@@ -136,7 +134,7 @@ class EnglishGraphInterpreter extends GraphInterpreter {
         }
         case _ => fail[Relation[Handle]]()
       } }
-      _ <- addRelation(h, rel)
+      _ <- addRelationBag(h, rel :: prepositions)
     } yield ()
   }
 
@@ -155,9 +153,6 @@ class EnglishGraphInterpreter extends GraphInterpreter {
   }
 
   // TODO - support for bi-transitive verbs (parse second object)
-  // TODO - support for adverbs and prepositions
-  // TODO - variables for verb-relations and add tense- and mode-predicates to those
-  //        (see MRS intro doc section 6.1.3)
 
   def indirectNounPhraseFrom(mainVerb: Int, vpHandle: Handle): Interpret[Variable] = {
     graphEdgeFrom(EnglishLinkTags.T, mainVerb) >>=
@@ -175,29 +170,6 @@ class EnglishGraphInterpreter extends GraphInterpreter {
       }
       vp <- verb(mainVerb, vpHandle, subj, obj, None) // TODO bi-object
     } yield ()
-
-    /*
-    for {
-      _ <- guardTokenHasTag(mainVerb, Verb)
-      vf <- verb(mainVerb)
-      subj <- toOption(nounPhraseFrom(EnglishLinkTags.S, mainVerb))
-      obj <- toOption { 
-        nounPhraseFrom(EnglishLinkTags.O, mainVerb) <+>
-        (  
-          graphEdgeFrom(EnglishLinkTags.T, mainVerb) >>= 
-          (x => nounPhraseFrom(EnglishLinkTags.O, x))
-        )
-      }
-      subj2 <- fromOption(subj) <+> implicitNounPhrase()
-      handle <- vf(subj2._3, obj.map(_._3), None)
-      top <- getMRSTop()
-      _ <- addConstraint(subj2._1, handle)
-      _ <- addConstraint(top, subj2._2)
-      _ <- optional(obj.map { o => 
-        addConstraint(o._1, handle) andThen addConstraint(top, o._2) 
-      })
-    } yield ()
-    */
   }
 
   type MakeQuantifier = (Handle, Handle) => Interpret[(Handle, Variable)]
@@ -250,9 +222,7 @@ class EnglishGraphInterpreter extends GraphInterpreter {
   def prepositionsFrom(w: Int, v: Variable, h: Handle): Interpret[List[Relation[Handle]]] = {
     for {
       ppPos <- walkPrepositions(w)
-      _ = println(s"ppPos: $ppPos")
       relations <- ppPos.map(makePreposition(_, v, h)).sequence
-      _ = println(s"relations: $relations")
     } yield relations
   }
 

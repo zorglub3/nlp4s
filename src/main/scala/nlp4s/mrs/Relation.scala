@@ -40,7 +40,7 @@ object Relation {
     }
   }
 
-  def pp(r: Recursive): Unit = {
+  def pp(r: Recursive, i: Int = 0): Unit = {
     def pp_relation(p: Relation[Recursive]): String = {
       s"${p.name}(${p.allVariables.map(_.name).mkString(", ")})"
     }
@@ -54,7 +54,7 @@ object Relation {
       } pp_recursive(indent + 1, scope)
     }
 
-    pp_recursive(0, r)
+    pp_recursive(i, r)
   }
 
   case class Quantifier[H](

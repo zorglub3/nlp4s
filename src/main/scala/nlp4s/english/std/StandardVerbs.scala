@@ -22,6 +22,7 @@ trait StandardVerbs { self: Lexicon.Builder =>
     TransitiveVerb("drink", "drinks", "drink", "drinking", "drank", "drunken"),
     TransitiveVerb("see", "sees", "see", "seeing", "saw", "seen"),
     TransitiveVerb("break", "breaks", "break", "breaking", "broke", "broken"),
+    TransitiveVerb("put", "puts", "put", "putting", "put", "put"),
 
     LinkVerb("look", "looks", "look", "looking", "looked", "looked"),
     LinkVerb("smell", "smells", "smell", "smelling", "smelled", "smelled"),
