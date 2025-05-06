@@ -19,7 +19,7 @@ case class Adverb(
     List(
       WordEntry(
         word,
-        EnglishWordTags.Adverb :: root.map(EnglishWordTags.AdjectiveRoot.apply _).toList, 
+        EnglishWordTags.Adverb :: EnglishWordTags.Label(label) :: root.map(EnglishWordTags.AdjectiveRoot.apply _).toList, 
         r(A) | l(A),
       )
     )

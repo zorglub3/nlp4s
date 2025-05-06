@@ -105,6 +105,29 @@ class EnglishGraphInterpreter extends GraphInterpreter {
   def negation(w: Int): Interpret[Boolean] = 
     (graphEdgeFrom(EnglishLinkTags.N, w) >> pure(true)) <+> pure(false)
 
+  def adverbsFrom(w: Int, v: Variable): Interpret[List[Relation[Handle]]] = {
+    val adverbLeft = {
+      for {
+        a <- graphEdgeLeft(EnglishLinkTags.A, w)
+        _ <- guardTokenHasTag(a, EnglishWordTags.Adverb)
+        label <- collectFirstTag(a) { case EnglishWordTags.Label(l) => l }
+      } yield Relation.Adverb[Handle](label, v)
+    }
+
+    val adverbRight = {
+      for {
+        a <- graphEdgeRight(EnglishLinkTags.A, w)
+        _ <- guardTokenHasTag(a, EnglishWordTags.Adverb)
+        label <- collectFirstTag(a) { case EnglishWordTags.Label(l) => l }
+      } yield Relation.Adverb[Handle](label, v)
+    }
+
+    for {
+      l <- toOption(adverbLeft)
+      r <- toOption(adverbRight)
+    } yield List(l, r).flatten
+  }
+
   def verb(
     w: Int, 
     h: Handle, 
@@ -122,6 +145,7 @@ class EnglishGraphInterpreter extends GraphInterpreter {
       _ <- addGlobalRelation(Relation.VerbMode(mode, u))
       _ <- addGlobalRelation(Relation.VerbTense(tense, u))
       prepositions <- prepositionsFrom(w, u, h)
+      adverbs <- adverbsFrom(w, u)
       rel <- { (subj, obj, biObj) match {
         case (s, Some(o), Some(bo)) => {
           pure[Relation[Handle]](Relation.BitransitiveVerb(u, label, s, o, bo))
@@ -134,7 +158,7 @@ class EnglishGraphInterpreter extends GraphInterpreter {
         }
         case _ => fail[Relation[Handle]]()
       } }
-      _ <- addRelationBag(h, rel :: prepositions)
+      _ <- addRelationBag(h, rel :: prepositions ++ adverbs)
     } yield ()
   }
 
@@ -245,7 +269,6 @@ class EnglishGraphInterpreter extends GraphInterpreter {
       _ <- addConstraint(top, quantifierHandle)
       _ <- addConstraint(qh2, h)
     } yield quantifierVariable
-    // } yield (qh2, quantifierHandle, quantifierVariable)
   }
 
   def pronounPhrase(w: Int, h: Handle): Interpret[Variable] = {

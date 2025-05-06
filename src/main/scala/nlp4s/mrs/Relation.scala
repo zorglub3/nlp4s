@@ -121,6 +121,19 @@ object Relation {
       QuantifierScope.pure(Adjective(adjectiveName, variable))
   }
 
+  case class Adverb[H](
+    adverb: String,
+    variable: Variable
+  ) extends Relation[H](adverb, List.empty, List(variable), List.empty) {
+    override def subject = Some(variable)
+
+    def mapH[I](f: H => I): Relation[I] =
+      Adverb(adverb, variable)
+
+    private[mrs] def flatMapH[I](f: H => QuantifierScope.F[I]): QuantifierScope.F[Relation[I]] =
+      QuantifierScope.pure(Adverb(adverb, variable))
+  }
+
   // adjective that describes a relation between two entities, eg, 
   // 'x is bigger than y'
   case class AdjectiveRelation[H](
