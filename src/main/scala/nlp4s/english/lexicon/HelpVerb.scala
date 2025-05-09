@@ -22,22 +22,22 @@ case class HelpVerb(
     List(
       WordEntry(
         root,
-        List(EnglishWordTags.HelpVerb, Verb, RootForm, VerbRoot(root)),
+        List(EnglishWordTags.Label(label), EnglishWordTags.HelpVerb, Verb, RootForm, VerbRoot(root)),
         opt(r(N)) & r(Hr),
       ), 
       WordEntry(
         presentSingular,
-        List(EnglishWordTags.HelpVerb, Verb, WordTense(BaseTense.Present), Singular, VerbRoot(root)),
+        List(EnglishWordTags.Label(label), EnglishWordTags.HelpVerb, Verb, WordTense(BaseTense.Present), Singular, VerbRoot(root)),
         opt(l(Qw)) & opt(r(N)) & r(Hs) | opt(r(N)) & r(Hs),
       ),
       WordEntry(
         presentPlural,
-        List(EnglishWordTags.HelpVerb, Verb, WordTense(BaseTense.Present), Plural, VerbRoot(root)),
+        List(EnglishWordTags.Label(label), EnglishWordTags.HelpVerb, Verb, WordTense(BaseTense.Present), Plural, VerbRoot(root)),
         opt(l(Qw)) & opt(r(N)) & r(Hp),
       ),
       WordEntry(
         past,
-        List(EnglishWordTags.HelpVerb, Verb, WordTense(BaseTense.Past), VerbRoot(root)),
+        List(EnglishWordTags.Label(label), EnglishWordTags.HelpVerb, Verb, WordTense(BaseTense.Past), VerbRoot(root)),
         opt(l(Qw)) & opt(r(N)) & r(H) | opt(r(N)) & r(Hs),
       )
     )

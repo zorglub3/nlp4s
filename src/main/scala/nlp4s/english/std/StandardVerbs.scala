@@ -31,7 +31,10 @@ trait StandardVerbs { self: Lexicon.Builder =>
 
     HelpVerb("do", "does", "do", "doing", "did", "done"),
     HelpVerb("will", "will", "will", "willing", "would", "willed"),
-    HelpVerb("can", "can", "can", "can", "could", "could"),
+    HelpVerb("can", "can", "can", "###", "could", "###"),
+    HelpVerb("may", "may", "may", "###", "might", "###"),
+    HelpVerb("shall", "shall", "shall", "###", "should", "###"),
+    HelpVerb("must", "must", "must", "###", "###", "###"),
 
     ToBe(),
     ToHave(),

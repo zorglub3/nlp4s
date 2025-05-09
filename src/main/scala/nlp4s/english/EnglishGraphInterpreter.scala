@@ -33,6 +33,15 @@ class EnglishGraphInterpreter extends GraphInterpreter {
   def nounRoot(w: Int): Interpret[String] =
     collectFirstTag(w) { case EnglishWordTags.NounRoot(root) => root }
 
+  def infinitiveTense(w: Int): Interpret[(Mode, Tense, Label)] = {
+    for {
+      _ <- graphEdgeFrom(EnglishLinkTags.S, w) <+> graphEdgeFrom(EnglishLinkTags.Qs, w)
+      _ <- guardTokenHasTag(w, EnglishWordTags.RootForm)
+      _ <- guardTokenHasTag(w, EnglishWordTags.Verb)
+      label <- getLabel(w)
+    } yield (Mode.Declarative, Tense.BareInfinitive, label)
+  }
+
   def simpleTense(w: Int): Interpret[(Mode, Tense, Label)] = {
     for {
       _ <- guardEmpty(graphEdgeFrom(EnglishLinkTags.T, w))
@@ -99,11 +108,30 @@ class EnglishGraphInterpreter extends GraphInterpreter {
     imperativeTense(w) <+> 
     futureTense(w) <+> 
     progressiveTense(w) <+> 
-    futureProgressiveTense(w)
+    futureProgressiveTense(w) <+>
+    infinitiveTense(w)
   }
 
   def negation(w: Int): Interpret[Boolean] = 
     (graphEdgeFrom(EnglishLinkTags.N, w) >> pure(true)) <+> pure(false)
+
+  def modalityFrom(w: Int, handle: Handle): Interpret[Handle] = {
+    for {
+      h <- graphEdgeFrom(EnglishLinkTags.H, w)
+      s <- graphEdgeFrom(EnglishLinkTags.S, w)
+      mode = if(h < s) Mode.Interrogative else Mode.Declarative
+      r <- verbRoot(h)
+      _ <- guard(r != "will") // tense (and 'will' for future) is treated separately
+      n <- negation(h)
+      tense <- verbTense(h)
+      label <- getLabel(h)
+      newHandle <- makeHandle()
+      modalVariable <- makeVariable()
+      _ <- addRelation(handle, Relation.Modal(modalVariable, label, n, newHandle))
+      _ <- addGlobalRelation(Relation.VerbTense(tense, modalVariable))
+      _ <- addGlobalRelation(Relation.VerbMode(mode, modalVariable))
+    } yield newHandle
+  }
 
   def adverbsFrom(w: Int, v: Variable): Interpret[List[Relation[Handle]]] = {
     val adverbLeft = {
@@ -128,6 +156,14 @@ class EnglishGraphInterpreter extends GraphInterpreter {
     } yield List(l, r).flatten
   }
 
+  def directionsFrom(w: Int, v: Variable): Interpret[Relation[Handle]] = {
+    for {
+      d <- graphEdgeFrom(EnglishLinkTags.E, w)
+      _ <- guardTokenHasTag(d, EnglishWordTags.Direction)
+      label <- getLabel(d)
+    } yield Relation.Adverb[Handle](label, v)
+  }
+
   def verb(
     w: Int, 
     h: Handle, 
@@ -146,6 +182,7 @@ class EnglishGraphInterpreter extends GraphInterpreter {
       _ <- addGlobalRelation(Relation.VerbTense(tense, u))
       prepositions <- prepositionsFrom(w, u, h)
       adverbs <- adverbsFrom(w, u)
+      direction <- toOption(directionsFrom(w, u))
       rel <- { (subj, obj, biObj) match {
         case (s, Some(o), Some(bo)) => {
           pure[Relation[Handle]](Relation.BitransitiveVerb(u, label, s, o, bo))
@@ -158,7 +195,9 @@ class EnglishGraphInterpreter extends GraphInterpreter {
         }
         case _ => fail[Relation[Handle]]()
       } }
-      _ <- addRelationBag(h, rel :: prepositions ++ adverbs)
+      relations = rel :: prepositions ++ adverbs ++ direction.toList
+      h2 <- modalityFrom(w, h) <+> pure(h)
+      _ <- addRelationBag(h2, relations)
     } yield ()
   }
 

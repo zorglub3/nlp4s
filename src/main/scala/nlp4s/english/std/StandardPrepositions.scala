@@ -98,5 +98,6 @@ trait StandardPrepositions { self: Lexicon.Builder =>
     Direction("backward"),
     Direction("backwards"),
     Direction("around"),
+    Direction("away"),
     ))
 }

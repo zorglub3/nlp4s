@@ -54,11 +54,11 @@ object Tense {
 
   // example: "I want _to win_" (note the "to")
   case object FullInfinitive extends Tense {
-    def asString() = ""
+    def asString() = "full_infinitive"
   }
 
   // example: "I can _do_ this"
   case object BareInfinitive extends Tense {
-    def asString() = ""
+    def asString() = "infinitive"
   }
 }

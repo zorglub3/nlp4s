@@ -13,7 +13,7 @@ case class Direction(word: String) extends EnglishLexiconEntry {
     List(
       WordEntry(
         word,
-        List(EnglishWordTags.Direction),
+        List(EnglishWordTags.Label(label), EnglishWordTags.Direction),
         l(E),
       ),
     )
