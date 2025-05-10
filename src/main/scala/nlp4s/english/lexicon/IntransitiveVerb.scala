@@ -18,7 +18,7 @@ case class IntransitiveVerb(
 
   val label = root
 
-  val activeVerb = opt(l(A)) & opt(r(A)) & opt(r(E)) & opt(r(P)) & opt(r(A)) 
+  val activeVerb = opt(l(A)) & opt(r(A)) & opt(r(P)) & opt(r(A)) 
 
   val wordEntries =
     List(

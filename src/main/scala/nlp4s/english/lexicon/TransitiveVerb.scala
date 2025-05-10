@@ -18,7 +18,7 @@ case class TransitiveVerb(
 
   val label = root
 
-  val activeVerbWithObject = opt(l(A)) & r(O) & opt(r(A)) & opt(r(E)) & opt(r(P)) & opt(r(A))
+  val activeVerbWithObject = opt(l(A)) & r(O) & opt(r(A)) & opt(r(P)) & opt(r(A))
 
   val wordEntries =
     List(

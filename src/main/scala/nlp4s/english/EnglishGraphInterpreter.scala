@@ -156,14 +156,6 @@ class EnglishGraphInterpreter extends GraphInterpreter {
     } yield List(l, r).flatten
   }
 
-  def directionsFrom(w: Int, v: Variable): Interpret[Relation[Handle]] = {
-    for {
-      d <- graphEdgeFrom(EnglishLinkTags.E, w)
-      _ <- guardTokenHasTag(d, EnglishWordTags.Direction)
-      label <- getLabel(d)
-    } yield Relation.Adverb[Handle](label, v)
-  }
-
   def verb(
     w: Int, 
     h: Handle, 
@@ -182,7 +174,6 @@ class EnglishGraphInterpreter extends GraphInterpreter {
       _ <- addGlobalRelation(Relation.VerbTense(tense, u))
       prepositions <- prepositionsFrom(w, u, h)
       adverbs <- adverbsFrom(w, u)
-      direction <- toOption(directionsFrom(w, u))
       rel <- { (subj, obj, biObj) match {
         case (s, Some(o), Some(bo)) => {
           pure[Relation[Handle]](Relation.BitransitiveVerb(u, label, s, o, bo))
@@ -195,7 +186,7 @@ class EnglishGraphInterpreter extends GraphInterpreter {
         }
         case _ => fail[Relation[Handle]]()
       } }
-      relations = rel :: prepositions ++ adverbs ++ direction.toList
+      relations = rel :: prepositions ++ adverbs
       h2 <- modalityFrom(w, h) <+> pure(h)
       _ <- addRelationBag(h2, relations)
     } yield ()

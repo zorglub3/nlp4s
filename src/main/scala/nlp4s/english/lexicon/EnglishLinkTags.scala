@@ -22,9 +22,7 @@ object EnglishLinkTags {
   case object Ds extends LinkTag("Ds") // singular: a, an, every, one, any
   case object Dp extends LinkTag("Dp") // plural: all, many
   case object D  extends LinkTag("D")  // singular/plural: the, some
-  // Direction
-  case object E extends LinkTag("E") // because 'D' was taken :-P
-  // A: verb-adverb binding
+  // A: verb-adverb binding (includes direction)
   case object A extends LinkTag("A")
   // C: degree_adverb-adjective
   case object C extends LinkTag("C")
