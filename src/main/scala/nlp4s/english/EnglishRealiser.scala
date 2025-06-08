@@ -56,13 +56,13 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
       case Present => (None, Present)
       case Past if interrogative => (Some(("do", Past)), BareInfinitive)
       case Past => (None, Past)
-      case Future => (Some(("will", Present)), BareInfinitive)
+      // case Future => (Some(("will", Present)), BareInfinitive)
       case PresentProgressive => (Some(("be", Present)), PresentParticiple)
       case PastProgressive => (Some(("be", Past)), PresentParticiple)
-      case FutureProgressive => ???
+      // case FutureProgressive => ???
       case PresentPerfect => (Some(("be", Present)), PastParticiple)
       case PastPerfect => (Some(("have", Past)), PastParticiple)
-      case FuturePerfect => ???
+      // case FuturePerfect => ???
       case PresentParticiple => (None, PresentParticiple)
       case PastParticiple => (None, PastParticiple)
       case FullInfinitive => (None, FullInfinitive)

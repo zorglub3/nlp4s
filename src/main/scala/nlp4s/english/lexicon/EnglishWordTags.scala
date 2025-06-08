@@ -38,6 +38,7 @@ object EnglishWordTags {
   case object HelpVerb extends WordTag("helpverb")
   case object ToBe extends WordTag("tobe")
   case object ToHave extends WordTag("tohave")
+  case object NegatedVerb extends WordTag("negatedverb")
 
   // case
   case class Casus(casus: BaseCasus) extends WordTag("casus")

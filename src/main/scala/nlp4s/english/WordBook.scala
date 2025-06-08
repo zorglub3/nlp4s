@@ -5,6 +5,7 @@ import nlp4s.base.Person
 import nlp4s.base.Tense
 import nlp4s.english.lexicon._
 
+// TODO modal verbs
 case class WordBook(
   verbs: Map[String, WordBook.Entry.VerbEntry],
   nouns: Map[String, WordBook.Entry.NounEntry],
@@ -99,6 +100,7 @@ object WordBook {
         case TransitiveVerb(r, ps, pp, ppart, past, pastpart) => verbEntries += label -> Entry.VerbEntry(r, ps, pp, ppart, past, pastpart)
         case HelpVerb(r, ps, pp, ppart, past, pastpart) => verbEntries += label -> Entry.VerbEntry(r, ps, pp, ppart, past, pastpart)
         case LinkVerb(r, ps, pp, ppart, past, pastpart) => verbEntries += label -> Entry.VerbEntry(r, ps, pp, ppart, past, pastpart)
+        // case ModalVerb(form) => verbEntries += label -> ??? // TODO
         case Noun(s, p, sp, pp) => nounEntries += label -> Entry.NounEntry(s, p, sp, pp, false)
         case MassNoun(s, sp) => nounEntries += label -> Entry.NounEntry(s, "", sp, "", true)
         case Adjective(a, c, s) => adjectiveEntries += label -> Entry.AdjectiveEntry(a, c, s, false) 
@@ -130,6 +132,10 @@ object WordBook {
       presentParticiple: String,
       past: String,
       pastParticiple: String
+    )
+
+    case class ModalVerbEntry(
+      form: String,
     )
 
     case class NounEntry(

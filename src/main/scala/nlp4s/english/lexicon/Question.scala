@@ -13,12 +13,12 @@ case class Question() extends EnglishLexiconEntry {
     List(
       WordEntry(
         "who",
-        List(EnglishWordTags.Question),
+        List(EnglishWordTags.Question, EnglishWordTags.Label("who")),
         /*l(W) & r(Ss) |*/ l(W) & r(Qo) | l(W) & r(Qs),
       ),
       WordEntry(
         "what",
-        List(EnglishWordTags.Question),
+        List(EnglishWordTags.Question, EnglishWordTags.Label("what")),
         /*l(W) & r(Ss) |*/ l(W) & r(Qo) | l(W) & r(Qs),
       ),
       WordEntry(

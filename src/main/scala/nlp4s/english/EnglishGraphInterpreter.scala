@@ -14,6 +14,8 @@ import nlp4s.mrs.Relation
 import nlp4s.mrs.Variable
 import nlp4s.parser.Parser
 
+// TODO cleanup
+
 class EnglishGraphInterpreter extends GraphInterpreter {
   import cats.syntax.all._
   import EnglishLinkTags._
@@ -46,10 +48,11 @@ class EnglishGraphInterpreter extends GraphInterpreter {
     for {
       _ <- guardEmpty(graphEdgeFrom(EnglishLinkTags.T, w))
       _ <- guardEmpty(graphEdgeFrom(EnglishLinkTags.H, w))
-      _ <- graphEdgeFrom(EnglishLinkTags.S, w) <+> graphEdgeFrom(EnglishLinkTags.Qs, w)
+      s <- graphEdgeFrom(EnglishLinkTags.S, w) <+> graphEdgeFrom(EnglishLinkTags.Qs, w)
+      isQuestionSubj <- tokenHasTag(s, EnglishWordTags.Question)
       tense <- verbTense(w)
       label <- getLabel(w)
-    } yield (Mode.Declarative, tense, label)
+    } yield (if(isQuestionSubj) Mode.Interrogative else Mode.Declarative, tense, label)
   }
     
   def imperativeTense(w: Int): Interpret[(Mode, Tense, Label)] = {
@@ -61,6 +64,7 @@ class EnglishGraphInterpreter extends GraphInterpreter {
     } yield (Mode.Imperative, Tense.Present, label)
   }
 
+  /*
   def futureTense(w: Int): Interpret[(Mode, Tense, Label)] = {
     for {
       h <- graphEdgeFrom(EnglishLinkTags.H, w)
@@ -71,11 +75,13 @@ class EnglishGraphInterpreter extends GraphInterpreter {
       label <- getLabel(w)
     } yield (if(h < s) Mode.Interrogative else Mode.Declarative, Tense.Future, label)
   }
+  */
 
   def progressiveTense(w: Int): Interpret[(Mode, Tense, Label)] = {
     for {
       h <- graphEdgeFrom(EnglishLinkTags.T, w)
-      s <- graphEdgeFrom(EnglishLinkTags.S, w)
+      s <- graphEdgeFrom(EnglishLinkTags.S, w) <+> graphEdgeFrom(EnglishLinkTags.Q, w)
+      isQuestionSubj <- tokenHasTag(s, EnglishWordTags.Question)
       r <- verbRoot(w)
       _ <- guard(r == "be")
       _ <- guardTokenHasTag(h, EnglishWordTags.WordTense(Tense.PresentParticiple))
@@ -84,9 +90,10 @@ class EnglishGraphInterpreter extends GraphInterpreter {
         case EnglishWordTags.WordTense(Tense.Past) => Tense.PastProgressive
       }
       label <- getLabel(h)
-    } yield (if(w < s) Mode.Interrogative else Mode.Declarative, t, label)
+    } yield (if(w < s || isQuestionSubj) Mode.Interrogative else Mode.Declarative, t, label)
   }
 
+  /*
   def futureProgressiveTense(w: Int): Interpret[(Mode, Tense, Label)] = {
     for {
       h <- graphEdgeFrom(EnglishLinkTags.T, w)
@@ -102,18 +109,19 @@ class EnglishGraphInterpreter extends GraphInterpreter {
       label <- getLabel(h)
     } yield (if(x < s) Mode.Interrogative else Mode.Declarative, Tense.FutureProgressive, label)
   }
+  */
 
   def verbPhraseTense(w: Int): Interpret[(Mode, Tense, Label)] = {
     simpleTense(w) <+> 
     imperativeTense(w) <+> 
-    futureTense(w) <+> 
+    // futureTense(w) <+> 
     progressiveTense(w) <+> 
-    futureProgressiveTense(w) <+>
+    // futureProgressiveTense(w) <+>
     infinitiveTense(w)
   }
 
   def negation(w: Int): Interpret[Boolean] = 
-    (graphEdgeFrom(EnglishLinkTags.N, w) >> pure(true)) <+> pure(false)
+    (graphEdgeFrom(EnglishLinkTags.N, w) >> pure(true)) <+> tokenHasTag(w, EnglishWordTags.NegatedVerb) 
 
   def modalityFrom(w: Int, handle: Handle): Interpret[Handle] = {
     for {
@@ -121,7 +129,6 @@ class EnglishGraphInterpreter extends GraphInterpreter {
       s <- graphEdgeFrom(EnglishLinkTags.S, w)
       mode = if(h < s) Mode.Interrogative else Mode.Declarative
       r <- verbRoot(h)
-      _ <- guard(r != "will") // tense (and 'will' for future) is treated separately
       n <- negation(h)
       tense <- verbTense(h)
       label <- getLabel(h)
@@ -187,22 +194,19 @@ class EnglishGraphInterpreter extends GraphInterpreter {
         case _ => fail[Relation[Handle]]()
       } }
       relations = rel :: prepositions ++ adverbs
-      h2 <- modalityFrom(w, h) <+> pure(h)
+      h2 <- (
+        modalityFrom(w, h) <+> 
+        pure(h))
       _ <- addRelationBag(h2, relations)
     } yield ()
   }
 
-  def implicitNounPhrase(h: Handle): Interpret[Variable] = {
+  def implicitNounPhrase(verb: Int, h: Handle): Interpret[Variable] = {
     for {
-      h0 <- makeHandle()
-      h1 <- makeHandle()
-      h2 <- makeHandle()
-      v  <- makeVariable()
-      _  <- addRelation(h0, Relation.Implicit(v))
-      _  <- addRelation(h1, Relation.Quantifier("implicit", v, h0, h2))
-      top <- getTop()
-      _ <- addConstraint(top, h1)
-      _ <- addConstraint(h2, h)
+      _ <- guardEmpty(graphEdgeFrom(EnglishLinkTags.S, verb))
+      _ <- guardEmpty(graphEdgeFrom(EnglishLinkTags.Q, verb))
+      v <- makeGlobalVariable()
+      _ <- addGlobalRelation(Relation.Implicit(v))
     } yield v
   }
 
@@ -217,12 +221,14 @@ class EnglishGraphInterpreter extends GraphInterpreter {
     for {
       _ <- guardTokenHasTag(mainVerb, Verb)
       vpHandle <- makeHandle()
-      subj <- nounPhraseFrom(EnglishLinkTags.S, mainVerb, vpHandle) <+> implicitNounPhrase(vpHandle)
+      subj <- nounPhraseFrom(EnglishLinkTags.S, mainVerb, vpHandle) <+> questionPhraseFrom(mainVerb) <+> implicitNounPhrase(mainVerb, vpHandle)
       obj <- toOption {
         nounPhraseFrom(EnglishLinkTags.O, mainVerb, vpHandle) <+> 
         indirectNounPhraseFrom(mainVerb, vpHandle)
       }
       vp <- verb(mainVerb, vpHandle, subj, obj, None) // TODO bi-object
+      top <- getTop()
+      _ <- addConstraint(top, vpHandle)
     } yield ()
   }
 
@@ -307,6 +313,9 @@ class EnglishGraphInterpreter extends GraphInterpreter {
       person <- collectFirstTag(w) { case EnglishWordTags.Person(p) => p } 
       plural <- tokenHasTag(w, EnglishWordTags.Plural)
       gender <- collectTag(w) { case EnglishWordTags.Gender(g) => g } .map { _.headOption }
+      v <- makeGlobalVariable()
+      _ <- addGlobalRelation(Relation.Pronoun(person, plural, gender, v))
+      /*
       v <- makeVariable()
       h0 <- makeHandle()
       _ <- addRelation(h0, Relation.Pronoun(person, plural, gender, v))
@@ -316,6 +325,16 @@ class EnglishGraphInterpreter extends GraphInterpreter {
       top <- getTop()
       _ <- addConstraint(top, h1)
       _ <- addConstraint(h2, h)
+      */
+    } yield v
+  }
+
+  def whoNounPhrase(w: Int): Interpret[Variable] = {
+    for {
+      _ <- tokenHasTag(w, EnglishWordTags.Question)
+      label <- collectFirstTag(w) { case EnglishWordTags.Label(l) => l }
+      v <- makeGlobalVariable()
+      _ <- addGlobalRelation(Relation.Question(label, v))
     } yield v
   }
 
@@ -328,6 +347,10 @@ class EnglishGraphInterpreter extends GraphInterpreter {
 
   def nounPhraseFrom(tag: LinkTag, verb: Int, handle: Handle): Interpret[Variable] = {
     graphEdgeFrom(tag, verb) >>= { x => nounPhrase(x, handle) }
+  }
+
+  def questionPhraseFrom(verb: Int): Interpret[Variable] = {
+    graphEdgeFrom(EnglishLinkTags.Qs, verb) >>= { x => whoNounPhrase(x) }
   }
 
   def statement: Interpret[Unit] = {

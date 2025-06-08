@@ -39,6 +39,8 @@ object EnglishLinkTags {
   case object Tr extends LinkTag("Tr")
   case object Ta extends LinkTag("Ta")
 
+  // General question
+  case object Q extends LinkTag("Q")
   // Qw question words (where, why, et.c.)
   case object Qw extends LinkTag("Qw")
   // Qo question object (eg "who are you", "what did you take")

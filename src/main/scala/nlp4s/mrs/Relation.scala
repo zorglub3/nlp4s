@@ -108,6 +108,19 @@ object Relation {
       QuantifierScope.pure(Pronoun(person, plural, gender, variable))
   }
 
+  case class Question[H](
+    label: String,
+    variable: Variable
+  ) extends Relation[H](label, List.empty, List(variable), List.empty) {
+    override def subject = Some(variable)
+
+    def mapH[I](f: H => I): Relation[I] =
+      Question(label, variable)
+
+    private[mrs] def flatMapH[I](f: H => QuantifierScope.F[I]): QuantifierScope.F[Relation[I]] =
+      QuantifierScope.pure(Question(label, variable))
+  }
+
   case class Adjective[H](
     adjectiveName: String,
     variable: Variable

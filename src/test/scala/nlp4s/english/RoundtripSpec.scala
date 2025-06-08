@@ -6,7 +6,7 @@ import nlp4s.demo.EnglishDemo
 
 class RoundtripSpec extends AnyFlatSpec with Matchers {
   // Dummy rule to make scalatest work nicely with generated test cases
-  "An English interpreter" should "dummy" in {
+  "An English realiser connected to an interpreter" should "dummy" in {
     true shouldBe true
   }
 

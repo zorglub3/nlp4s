@@ -17,12 +17,17 @@ case class ToBe() extends EnglishLexiconEntry {
     List(
       WordEntry(
         "be",
-        List(EnglishWordTags.ToBe, Verb, HelpVerb, VerbRoot("be"), RootForm),
-        toBeObj,
+        List(Label("be"), EnglishWordTags.ToBe, Verb, HelpVerb, VerbRoot("be"), RootForm),
+        toBeObj |
+        (l(Hs) & l(Ss) & toBeObj) |
+        (l(Hs) & l(Qs) & toBeObj) |
+        (l(Hp) & l(Sp) & toBeObj) |
+        (opt(l(N)) & l(Sp) & l(Hp) & toBeObj) |
+        (opt(l(N)) & l(Ss) & l(Hs) & toBeObj),
       ),
       WordEntry(
         "am",
-        List(EnglishWordTags.ToBe, Verb, HelpVerb, VerbRoot("be"), WordTense(BaseTense.Present)),
+        List(Label("be"), EnglishWordTags.ToBe, Verb, HelpVerb, VerbRoot("be"), WordTense(BaseTense.Present)),
         ((l(Spi) & opt(r(N)) & toBeObj) |
          (opt(l(Qw)) & r(Sqpi) & opt(r(N)) & toBeObj) |
          (l(Qo) & r(Sqpi)) |
@@ -31,7 +36,7 @@ case class ToBe() extends EnglishLexiconEntry {
       ),
       WordEntry(
         "are",
-        List(EnglishWordTags.ToBe, Verb, HelpVerb, VerbRoot("be"), WordTense(BaseTense.Present)),
+        List(Label("be"), EnglishWordTags.ToBe, Verb, HelpVerb, VerbRoot("be"), WordTense(BaseTense.Present)),
         ((l(Spp) & opt(r(N)) & toBeObj) | 
          (opt(l(Qw)) & r(Sqpp) & opt(r(N)) & toBeObj) |
          (l(Qo) & r(Sqpp)) |
@@ -40,7 +45,7 @@ case class ToBe() extends EnglishLexiconEntry {
       ),
       WordEntry(
         "is",
-        List(EnglishWordTags.ToBe, Verb, HelpVerb, VerbRoot("be"), WordTense(BaseTense.Present)),
+        List(Label("be"), EnglishWordTags.ToBe, Verb, HelpVerb, VerbRoot("be"), WordTense(BaseTense.Present)),
         ((l(Ss) & opt(r(N)) & toBeObj) | 
          (opt(l(Qw)) & r(Sqs) & opt(r(N)) & toBeObj) |
          (l(Qo) & r(Sqs)) |
@@ -50,7 +55,7 @@ case class ToBe() extends EnglishLexiconEntry {
       ),
       WordEntry(
         "was",
-        List(EnglishWordTags.ToBe, Verb, HelpVerb, VerbRoot("be"), WordTense(BaseTense.Past)),
+        List(Label("be"), EnglishWordTags.ToBe, Verb, HelpVerb, VerbRoot("be"), WordTense(BaseTense.Past)),
         ((l(Spi) & opt(r(N)) & toBeObj) |
          (opt(l(Qw)) & r(Sqpi) & opt(r(N)) & toBeObj) |
          (l(Qo) & r(Sqpi)) |
@@ -59,7 +64,7 @@ case class ToBe() extends EnglishLexiconEntry {
       ),
       WordEntry(
         "was",
-        List(EnglishWordTags.ToBe, Verb, HelpVerb, VerbRoot("be"), WordTense(BaseTense.Past)),
+        List(Label("be"), EnglishWordTags.ToBe, Verb, HelpVerb, VerbRoot("be"), WordTense(BaseTense.Past)),
         ((l(Ss) & opt(r(N)) & toBeObj) |
          (opt(l(Qw)) & r(Sqs)  & opt(r(N)) & toBeObj) |
          (l(Qo) & r(Sqs)) |
@@ -69,12 +74,17 @@ case class ToBe() extends EnglishLexiconEntry {
       ),
       WordEntry(
         "were",
-        List(EnglishWordTags.ToBe, Verb, HelpVerb, VerbRoot("be"), WordTense(BaseTense.Past)),
+        List(Label("be"), EnglishWordTags.ToBe, Verb, HelpVerb, VerbRoot("be"), WordTense(BaseTense.Past)),
         ((l(Spp) & opt(r(N)) & toBeObj) |
          (opt(l(Qw)) & r(Sqpp) & opt(r(N)) & toBeObj) |
          (l(Qo) & r(Sqpp)) |
          (l(Qw) & r(Sqpp))
         ),
+      ),
+      WordEntry(
+        "been",
+        List(Label("be"), EnglishWordTags.ToBe, Verb, HelpVerb, VerbRoot("be"), WordTense(BaseTense.PastParticiple), VerbRoot("be"), Label("be")),
+        l(Ta) & toBeObj
       ),
     )
 }

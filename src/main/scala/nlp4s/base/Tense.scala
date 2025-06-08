@@ -13,9 +13,11 @@ object Tense {
     def asString() = "past"
   }
 
+  /*
   case object Future extends Tense {
     def asString() = "future"
   }
+  */
 
   case object PresentProgressive extends Tense {
     def asString() = "present_progressive"
@@ -25,9 +27,11 @@ object Tense {
     def asString() = "past_progressive"
   }
 
+  /*
   case object FutureProgressive extends Tense {
     def asString() = "future_progressive"
   }
+  */
 
   case object PresentPerfect extends Tense {
     def asString() = "present_perfect"
@@ -37,9 +41,11 @@ object Tense {
     def asString() = "past_perfect"
   }
 
+  /*
   case object FuturePerfect extends Tense {
     def asString() = "future_perfect"
   }
+  */
 
 
   // These are not tenses but verb forms, but sometimes this is as
