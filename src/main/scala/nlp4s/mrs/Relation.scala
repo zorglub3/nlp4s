@@ -211,22 +211,23 @@ object Relation {
     def args = List.empty
   }
 
-  /* TODO delete this?
-  case class AuxVerb[H](
+  case class Link[H](
     variable: Variable,
-    verbName: String,
-    arg0: Variable,
-    scope: H
-  ) extends Relation[H](verbName, List.empty, List(variable, arg0), List(scope)) with VerbRelation[H] {
+    mode: String,
+    negated: Boolean,
+    subj: Variable,
+    scope: H,
+  ) extends Relation[H]("link_" ++ (if(negated) "not_" else "") ++ mode, List.empty, List(variable, subj), List(scope)) with VerbRelation[H] {
+    override def subject = Some(subj)
+
     def mapH[I](f: H => I): Relation[I] =
-      AuxVerb(variable, verbName, arg0, f(scope))
+      Link(variable, mode, negated, subj, f(scope))
 
     private[mrs] def flatMapH[I](f: H => QuantifierScope.F[I]): QuantifierScope.F[Relation[I]] =
-      for(s <- f(scope)) yield AuxVerb(variable, verbName, arg0, s)
+      for( s <- f(scope)) yield Link(variable, mode, negated, subj, s)
 
-    def args = List(arg0)
+    def args = List(subj)
   }
-  */
 
   case class IntransitiveVerb[H](
     variable: Variable,
