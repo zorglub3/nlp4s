@@ -23,5 +23,6 @@ object AST {
     Relation.pp(ast.tree, 4)
     println(s"  variables:  ${ast.globalVariables.map(_.name).mkString(", ")}")
     println(s"  predicates: ${ast.globalPredicates.map(pr).mkString(", ")}")
+    println(">")
   }
 }

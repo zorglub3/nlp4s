@@ -1,6 +1,11 @@
 package nlp4s.mrs
 
 import cats.data.StateT
+import cats.data.NonEmptyList
+import nlp4s.base.NlpResult
+
+// TODO fixme wrt modal/auxiliary verbs
+// - like "he must run"
 
 class QuantifierScope {
   import cats.syntax.all._
@@ -40,7 +45,7 @@ class QuantifierScope {
     getEP(h) <+> getFloatingEP(h) <+> getConstrainedEP(h)
   }
 
-  def resolve(mrs: MRS): List[AST] = {
+  def resolve(mrs: MRS): NlpResult[NonEmptyList[AST]] = {
     val ep = {
       for {
         ep <- resolveRec(mrs.globalTop)
@@ -48,7 +53,12 @@ class QuantifierScope {
       } yield ep
     }
 
-    ep.runA(mrs.initState).map(AST.apply(_, mrs.globalRelations, mrs.globalVariables))
+    val result = ep.runA(mrs.initState).map(AST.apply(_, mrs.globalRelations, mrs.globalVariables))
+
+    result match {
+      case Nil => Left(NoQuantifierScopeResolution())
+      case h::t => Right(NonEmptyList(h, t))
+    }
   }
 }
 
