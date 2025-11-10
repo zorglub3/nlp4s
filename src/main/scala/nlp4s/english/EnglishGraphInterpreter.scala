@@ -133,7 +133,7 @@ class EnglishGraphInterpreter extends GraphInterpreter {
       tense <- verbTense(h)
       label <- getLabel(h)
       newHandle <- makeHandle()
-      modalVariable <- makeVariable()
+      modalVariable <- makeGlobalVariable()
       _ <- addRelation(handle, Relation.Modal(modalVariable, label, n, newHandle))
       _ <- addGlobalRelation(Relation.VerbTense(tense, modalVariable))
       _ <- addGlobalRelation(Relation.VerbMode(mode, modalVariable))

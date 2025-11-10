@@ -4,9 +4,6 @@ import cats.data.StateT
 import cats.data.NonEmptyList
 import nlp4s.base.NlpResult
 
-// TODO fixme wrt modal/auxiliary verbs
-// - like "he must run"
-
 class QuantifierScope {
   import cats.syntax.all._
   import QuantifierScope._
