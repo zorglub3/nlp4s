@@ -11,6 +11,7 @@ import nlp4s.mrs.Variable
 import nlp4s.realiser.Realiser
 import cats.syntax.all._
 
+// TODO cleanup comments + deal with modal verbs
 class EnglishRealiser(wordBook: WordBook) extends Realiser {
   import Relation._
 
@@ -183,7 +184,7 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
   }
 
   def tellDeclarative(rel: Relation[Recursive] with VerbRelation[_]): F[Unit] = {
-    val subject = rel.args.head
+    val subject = rel.args.headOption.getOrElse(???)
     val args = rel.args.tail
 
     for {
@@ -197,6 +198,7 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
     } yield ()
   }
 
+  /*
   def tellVerbPhrase(rel: Relation[Recursive]): F[Unit] = {
     rel match {
       case vr: VerbRelation[_] => {
@@ -210,11 +212,24 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
       case _ => fail
     }
   }
+  */
 
-  def tellRelationList(body: List[Relation[Recursive]]): F[Unit] = {
-    body match {
-      case List(relation) if relation.isVerb => tellVerbPhrase(relation)
-      case _ => pure(())
+  def tellSingleRelation(relation: Relation[Recursive]): F[Unit] = {
+    relation match {
+      case Modal(v, modality, negated, scope) => ???
+      case vr: VerbRelation[_] => {
+        verbMode(vr.variable) >>= {
+          case Mode.Imperative => tellImperative(vr)
+          case Mode.Interrogative => tellInterrogative(vr)
+          case Mode.Declarative => tellDeclarative(vr)
+          case Mode.Exclamatory => tellDeclarative(vr)
+        }
+      }
+      case _ => fail
     }
+  }
+ 
+  def tellRelationList(body: List[Relation[Recursive]]): F[Unit] = {
+    body.map(tellSingleRelation _).sequenceVoid
   }
 }
