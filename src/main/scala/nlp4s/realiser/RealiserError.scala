@@ -1,5 +1,14 @@
 package nlp4s.realiser
 
 import nlp4s.base.NlpError
+import nlp4s.mrs.Variable
+import nlp4s.mrs.Relation
 
-case class RealiserError(msg: String) extends NlpError(msg)
+class RealiserError(msg: String) extends NlpError(msg)
+
+case class RealiserMissingTense(v: Variable) extends RealiserError(s"Verb (with variable: $v) is missing tense")
+case class RealiserMissingMode(v: Variable) extends RealiserError(s"Verb (with variable: $v) is missing mode")
+case class RealiserRelationFail(r: Relation[_]) extends RealiserError(s"Unable to realise relation: $r")
+case class RealiserClauseFail(c: Clause) extends RealiserError(s"Unable to realise clause: $c")
+
+case object RealiserGotNone extends RealiserError("Realiser got none (internal)")

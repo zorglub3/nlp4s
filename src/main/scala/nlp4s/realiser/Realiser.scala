@@ -12,25 +12,45 @@ import nlp4s.mrs.Handle
 import nlp4s.mrs.AST
 
 abstract class Realiser {
-  type W[T] = WriterT[Option, List[String], T]
+  type E[T] = Either[RealiserError, T]
+  type W[T] = WriterT[E, List[String], T]
   type F[T] = StateT[W, RealiserState, T]
+
+  case class Modality(verb: String, negated: Boolean)
 
   case class RealiserState(
     variableRelations: List[(Variable, List[Relation[Relation.Recursive]])],
-    globalRelations: Set[Relation[Handle]]
+    globalRelations: Set[Relation[Handle]],
+    modality: List[Modality],
   ) {
+    def pushModality(verb: String, negated: Boolean): RealiserState =
+      RealiserState(variableRelations, globalRelations, Modality(verb, negated)::modality)
+    def popModality(): RealiserState = {
+      if(modality.isEmpty) {
+        RealiserState(variableRelations, globalRelations, List.empty)
+      } else {
+        RealiserState(variableRelations, globalRelations, modality.tail)
+      }
+    }
+
     def push(p: (Variable, List[Relation[Relation.Recursive]])): RealiserState =
-      RealiserState(p :: variableRelations, globalRelations)
+      RealiserState(p :: variableRelations, globalRelations, modality)
     def pop(): RealiserState = {
       if(variableRelations.isEmpty) {
-        RealiserState(List.empty, globalRelations)
+        RealiserState(List.empty, globalRelations, modality)
       } else {
-        RealiserState(variableRelations.tail, globalRelations)
+        RealiserState(variableRelations.tail, globalRelations, modality)
       }
     }
   }
 
-  def init(): RealiserState = RealiserState(List.empty, Set.empty)
+  def init(): RealiserState = RealiserState(List.empty, Set.empty, List.empty)
+
+  def pushModality(verb: String, negated: Boolean): F[Unit] =
+    StateT.modify(_.pushModality(verb, negated))
+
+  def popModality(): F[Unit] =
+    StateT.modify(_.popModality())
 
   def push(p: (Variable, List[Relation[Relation.Recursive]])): F[Unit] =
     StateT.modify(_.push(p))
@@ -52,7 +72,11 @@ abstract class Realiser {
   def setGlobalPredicates(gr: Set[Relation[Handle]]): F[Unit] = 
     StateT.modify(_.copy(globalRelations = gr))
 
-  def fail: F[Unit] = StateT.liftF(WriterT.valueT(None))
+  def failRelation(relation: Relation[_]): F[Unit] = 
+    StateT.liftF(WriterT.valueT(Left(RealiserRelationFail(relation))))
+
+  def failClause(clause: Clause): F[Unit] =
+    StateT.liftF(WriterT.valueT(Left(RealiserClauseFail(clause))))
 
   def pure[T](v: T): F[T] = StateT.liftF(WriterT.value(v))
 
@@ -66,14 +90,22 @@ abstract class Realiser {
 
   def tellMore(ss: List[String]): F[Unit] = StateT.liftF(WriterT.tell(ss))
 
-  def liftOption[T](v: Option[T]): F[T] = StateT.liftF(WriterT.valueT(v))
+  def liftOption[T](v: Option[T]): F[T] = {
+    v match {
+      case Some(u) => StateT.liftF(WriterT.valueT(Right(u)))
+      case None => StateT.liftF(WriterT.valueT(Left(RealiserGotNone)))
+    }
+  }
 
   import Relation._
 
   def verbMode(v: Variable): F[Mode] = {
     StateT.inspectF { s => 
       WriterT.valueT(
-        s.globalRelations.collectFirst { case VerbMode(mode, u) if v == u => mode }
+        s.globalRelations.collectFirst { case VerbMode(mode, u) if v == u => mode } match {
+          case None => Left(RealiserMissingMode(v))
+          case Some(mode) => Right(mode)
+        }
       ) 
     }
   }
@@ -81,7 +113,10 @@ abstract class Realiser {
   def verbTense(v: Variable): F[Tense] = {
     StateT.inspectF { s =>
       WriterT.valueT(
-        s.globalRelations.collectFirst { case VerbTense(tense, u) if v == u => tense }
+        s.globalRelations.collectFirst { case VerbTense(tense, u) if v == u => tense } match {
+          case None => Left(RealiserMissingTense(v))
+          case Some(tense) => Right(tense)
+        }
       )
     }
   }
@@ -102,7 +137,7 @@ abstract class Realiser {
   def collectRelationsRec(x: Variable, rstr: Recursive): F[List[Relation[Recursive]]] =
     rstr.relations.map(collectRelations(x, _)).sequence.map(_.flatten)
 
-  def tellRelationList(body: List[Relation[Recursive]]): F[Unit]
+  def tellRelationList(body: List[Relation[Recursive]], f: Recursive => F[Unit]): F[Unit]
 
   def tellRecRelation(body: Recursive): F[Unit] = {
     body match {
@@ -114,8 +149,8 @@ abstract class Realiser {
           _ <- pop()
         } yield ()
       }
-      case Recursive(_, rels) if !rels.exists(_.isQuantifier) => tellRelationList(rels)
-      case _ => pure(()) // TODO
+      case Recursive(_, rels) if !rels.exists(_.isQuantifier) => tellRelationList(rels, tellRecRelation)
+      case _ => ??? // TODO
     }
   }
 
@@ -141,14 +176,11 @@ abstract class Realiser {
       case Clause.MRSClause(ast) => {
         setGlobalPredicates(ast.globalPredicates) >> realiseMRS(ast) >> tell(clause.punctuation)
       }
-      case _ => fail
+      case _ => failClause(clause)
     }
   }
 
   def run(clauses: List[Clause]): NlpResult[List[String]] = {
-    clauses.map(realiseClause).sequenceVoid.runS(init()).run match {
-      case None => Left(RealiserError("Could not realise clause"))
-      case Some(l) => Right(l._1)
-    }
+    clauses.map(realiseClause).sequenceVoid.runS(init()).run.map(_._1)
   }
 }

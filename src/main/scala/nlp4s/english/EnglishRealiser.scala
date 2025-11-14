@@ -214,22 +214,28 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
   }
   */
 
-  def tellSingleRelation(relation: Relation[Recursive]): F[Unit] = {
+ def tellSingleRelation(relation: Relation[Recursive], f: Recursive => F[Unit]): F[Unit] = {
     relation match {
-      case Modal(v, modality, negated, scope) => ???
+      case Modal(v, modality, negated, scope) => {
+        for {
+          _ <- pushModality(modality, negated)
+          _ <- f(scope)
+          _ <- popModality()
+        } yield ()
+      }
       case vr: VerbRelation[_] => {
         verbMode(vr.variable) >>= {
-          case Mode.Imperative => tellImperative(vr)
-          case Mode.Interrogative => tellInterrogative(vr)
-          case Mode.Declarative => tellDeclarative(vr)
-          case Mode.Exclamatory => tellDeclarative(vr)
+          case Mode.Imperative => tellImperative(vr) <+> failRelation(relation)
+          case Mode.Interrogative => tellInterrogative(vr) <+> failRelation(relation)
+          case Mode.Declarative => tellDeclarative(vr) <+> failRelation(relation)
+          case Mode.Exclamatory => tellDeclarative(vr) <+> failRelation(relation)
         }
       }
-      case _ => fail
+      case _ => failRelation(relation)
     }
   }
  
-  def tellRelationList(body: List[Relation[Recursive]]): F[Unit] = {
-    body.map(tellSingleRelation _).sequenceVoid
+  def tellRelationList(body: List[Relation[Recursive]], f: Recursive => F[Unit]): F[Unit] = {
+    body.map(tellSingleRelation(_, f)).sequenceVoid
   }
 }
