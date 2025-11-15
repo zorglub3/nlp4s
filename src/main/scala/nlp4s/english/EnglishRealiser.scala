@@ -88,7 +88,7 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
 
     lazy val pronounNP: F[NPGrammar] = 
       for {
-        relations <- variableRelations(v)
+        relations <- allRelations(v)
         pronoun <- liftOption(relations.collectFirst {
           case p: Pronoun[_] => p
         }, RealiserMissingPronoun(v))
@@ -148,8 +148,8 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
 
   def tellPronounPhrase(v: Variable, casus: Casus): F[Unit] = {
     for {
-      rels <- variableRelations(v) // TODO also global predicates
-      pronoun <- liftOption(rels.collectFirst { case p: Pronoun[_] => p }, RealiserMissingPronoun(v))
+      allPreds <- allRelations(v)
+      pronoun <- liftOption(allPreds.collectFirst { case p: Pronoun[_] => p }, RealiserMissingPronoun(v))
       word <- pronounWord(pronoun.person, pronoun.plural, pronoun.gender, casus)
       _ <- tell(word)
     } yield ()

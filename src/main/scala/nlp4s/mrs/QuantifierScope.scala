@@ -50,7 +50,9 @@ class QuantifierScope {
       } yield ep
     }
 
-    val result = ep.runA(mrs.initState).map(AST.apply(_, mrs.globalRelations, mrs.globalVariables))
+    val resolvedGlobalRelations = mrs.globalRelations.map(_.mapH(_ => Relation.Recursive(mrs.hook.globalTop, List.empty))).toList
+
+    val result = ep.runA(mrs.initState).map(AST.apply(_, resolvedGlobalRelations, mrs.globalVariables))
 
     result match {
       case Nil => Left(NoQuantifierScopeResolution())

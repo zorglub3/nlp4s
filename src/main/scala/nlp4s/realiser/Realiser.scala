@@ -8,7 +8,6 @@ import nlp4s.base.Mode
 import nlp4s.base.Tense
 import nlp4s.mrs.Relation
 import nlp4s.mrs.Variable
-import nlp4s.mrs.Handle
 import nlp4s.mrs.AST
 
 abstract class Realiser {
@@ -20,7 +19,7 @@ abstract class Realiser {
 
   case class RealiserState(
     variableRelations: List[(Variable, List[Relation[Relation.Recursive]])],
-    globalRelations: Set[Relation[Handle]],
+    globalRelations: List[Relation[Relation.Recursive]],
     modality: List[Modality],
   ) {
     def pushModality(verb: String, negated: Boolean): RealiserState =
@@ -46,7 +45,7 @@ abstract class Realiser {
     def currentModality(): Option[Modality] = modality.headOption
   }
 
-  def init(): RealiserState = RealiserState(List.empty, Set.empty, List.empty)
+  def init(): RealiserState = RealiserState(List.empty, List.empty, List.empty)
 
   def pushModality(verb: String, negated: Boolean): F[Unit] =
     StateT.modify(_.pushModality(verb, negated))
@@ -60,8 +59,15 @@ abstract class Realiser {
   def pop(): F[Unit] =
     StateT.modify(_.pop())
 
-  def globalPredicate(u: Variable): F[Set[Relation[Handle]]] = {
+  def globalPredicate(u: Variable): F[List[Relation[Relation.Recursive]]] = {
     StateT.inspect(_.globalRelations.filter(_.variableArgs.contains(u)))
+  }
+
+  def allRelations(v: Variable): F[List[Relation[Relation.Recursive]]] = {
+    for {
+      global <- globalPredicate(v)
+      local <- variableRelations(v)
+    } yield global ++ local
   }
 
   def currentModality(): F[Option[Modality]] =
@@ -74,7 +80,7 @@ abstract class Realiser {
       .flatten)
   }
 
-  def setGlobalPredicates(gr: Set[Relation[Handle]]): F[Unit] = 
+  def setGlobalPredicates(gr: List[Relation[Relation.Recursive]]): F[Unit] = 
     StateT.modify(_.copy(globalRelations = gr))
 
   def failRelation(relation: Relation[_]): F[Unit] = 
