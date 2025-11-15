@@ -2,18 +2,19 @@ package nlp4s.mrs
 
 case class AST(
   tree: Relation.Recursive,
-  globalPredicates: Set[Relation[Handle]],
+  // globalPredicates: Set[Relation[Handle]],
+  globalPredicates: List[Relation[Relation.Recursive]],
   globalVariables: Set[Variable]
 )
 
 object AST {
   def pp(ast: AST): Unit = {
-    def pr(r: Relation[Handle]): String = {
+    def pr(r: Relation[Relation.Recursive]): String = {
       // TODO better print of verb relations, eg, "x2:take(x4, x43)" (the "verb global variable")
       val args: Seq[String] =
         r.scopedVariables.map(_.name) ++
         r.variableArgs.map(_.name) ++
-        r.scopalArgs.map(_.asString)
+        r.scopalArgs.map(_.asString(pr))
 
       s"${r.name}(${args.mkString(", ")})"
     }

@@ -8,7 +8,7 @@ import nlp4s.base.Gender
 import nlp4s.base.Tense
 import nlp4s.mrs.Relation
 import nlp4s.mrs.Variable
-import nlp4s.realiser.Realiser
+import nlp4s.realiser._
 import cats.syntax.all._
 
 // TODO cleanup comments + deal with modal verbs
@@ -31,14 +31,14 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
     grammar match {
       case ProperNP(person, plural) => {
         for {
-          form <- liftOption(wordBook.verbForm(rel, person, plural, tense))
+          form <- liftOption(wordBook.verbForm(rel, person, plural, tense), RealiserMissingWord(rel))
           _ <- when(tense == Tense.FullInfinitive) { tell("to") } 
           _ <- tell(form)
         } yield ()
       }
       case ImperativeNP => {
         for {
-          form <- liftOption(wordBook.verbForm(rel, Person.Second, false, Tense.BareInfinitive))
+          form <- liftOption(wordBook.verbForm(rel, Person.Second, false, Tense.BareInfinitive), RealiserMissingWord(rel))
           _ <- tell(form)
         } yield ()
       }
@@ -73,7 +73,7 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
       
   def tellNoun(rel: String, plural: Boolean, possessive: Boolean): F[Unit] = {
     for {
-      form <- liftOption(wordBook.nounForm(rel, plural, possessive))
+      form <- liftOption(wordBook.nounForm(rel, plural, possessive), RealiserMissingWord(rel))
       _ <- tell(form)
     } yield ()
   }
@@ -82,8 +82,8 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
     val properNP: F[NPGrammar] = 
       for {
         relations <- variableRelations(v)
-        quantifier <- liftOption(relations.collectFirst { case q: Quantifier[_] => q })
-        plural <- liftOption(wordBook.quantifierPlural(quantifier.name))
+        quantifier <- liftOption(relations.collectFirst { case q: Quantifier[_] => q }, RealiserMissingQuantifier(v))
+        plural <- liftOption(wordBook.quantifierPlural(quantifier.name), RealiserMissingWord(quantifier.name))
       } yield ProperNP(Person.Third, plural)
 
     lazy val pronounNP: F[NPGrammar] = 
@@ -91,7 +91,7 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
         relations <- variableRelations(v)
         pronoun <- liftOption(relations.collectFirst {
           case p: Pronoun[_] => p
-        })
+        }, RealiserMissingPronoun(v))
       } yield ProperNP(pronoun.person, pronoun.plural)
 
     properNP <+> pronounNP
@@ -100,9 +100,9 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
   def tellProperNounPhrase(v: Variable, casus: Casus): F[Unit] = {
     for {
       rels <- variableRelations(v)
-      quantifier <- liftOption(rels.collectFirst { case q: Quantifier[_] => q })
-      quantWord <- liftOption(wordBook.quantifierForm(quantifier.name))
-      quantPlural <- liftOption(wordBook.quantifierPlural(quantifier.name))
+      quantifier <- liftOption(rels.collectFirst { case q: Quantifier[_] => q }, RealiserMissingQuantifier(v))
+      quantWord <- liftOption(wordBook.quantifierForm(quantifier.name), RealiserMissingWord(quantifier.name))
+      quantPlural <- liftOption(wordBook.quantifierPlural(quantifier.name), RealiserMissingWord(quantifier.name))
       adjectives = rels.collect { case a: Adjective[_] => a } .toList
       nouns = rels.collect { case n: Noun[_] => n } .toList
       adjWords = adjectives.flatMap(a => wordBook.adjectiveForm(a.name, AdjectiveForm.Absolute))
@@ -142,14 +142,14 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
         case (Second, true, _, Accusative) => Some("you")
         case (Third, true, _, Accusative) => Some("them")
         case _ => None
-      }
+      }, RealiserMissingWord((person, plural, gender, casus).toString())
     )
   }
 
   def tellPronounPhrase(v: Variable, casus: Casus): F[Unit] = {
     for {
-      rels <- variableRelations(v)
-      pronoun <- liftOption(rels.collectFirst { case p: Pronoun[_] => p })
+      rels <- variableRelations(v) // TODO also global predicates
+      pronoun <- liftOption(rels.collectFirst { case p: Pronoun[_] => p }, RealiserMissingPronoun(v))
       word <- pronounWord(pronoun.person, pronoun.plural, pronoun.gender, casus)
       _ <- tell(word)
     } yield ()
@@ -225,10 +225,10 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
       }
       case vr: VerbRelation[_] => {
         verbMode(vr.variable) >>= {
-          case Mode.Imperative => tellImperative(vr) <+> failRelation(relation)
-          case Mode.Interrogative => tellInterrogative(vr) <+> failRelation(relation)
-          case Mode.Declarative => tellDeclarative(vr) <+> failRelation(relation)
-          case Mode.Exclamatory => tellDeclarative(vr) <+> failRelation(relation)
+          case Mode.Imperative => tellImperative(vr)
+          case Mode.Interrogative => tellInterrogative(vr)
+          case Mode.Declarative => tellDeclarative(vr)
+          case Mode.Exclamatory => tellDeclarative(vr)
         }
       }
       case _ => failRelation(relation)

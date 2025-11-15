@@ -38,6 +38,9 @@ object Relation {
 
       handle :: nested 
     }
+
+    def asString(pp: Relation[Recursive] => String): String =
+      relations.map(pp).mkString(", ")
   }
 
   def pp(r: Recursive, i: Int = 0): Unit = {

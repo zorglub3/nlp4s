@@ -42,6 +42,8 @@ abstract class Realiser {
         RealiserState(variableRelations.tail, globalRelations, modality)
       }
     }
+
+    def currentModality(): Option[Modality] = modality.headOption
   }
 
   def init(): RealiserState = RealiserState(List.empty, Set.empty, List.empty)
@@ -61,6 +63,9 @@ abstract class Realiser {
   def globalPredicate(u: Variable): F[Set[Relation[Handle]]] = {
     StateT.inspect(_.globalRelations.filter(_.variableArgs.contains(u)))
   }
+
+  def currentModality(): F[Option[Modality]] =
+    StateT.inspect(_.currentModality())
 
   def variableRelations(u: Variable): F[List[Relation[Relation.Recursive]]] = {
     StateT.inspect(_.variableRelations
@@ -90,10 +95,10 @@ abstract class Realiser {
 
   def tellMore(ss: List[String]): F[Unit] = StateT.liftF(WriterT.tell(ss))
 
-  def liftOption[T](v: Option[T]): F[T] = {
+  def liftOption[T](v: Option[T], err: => RealiserError): F[T] = {
     v match {
       case Some(u) => StateT.liftF(WriterT.valueT(Right(u)))
-      case None => StateT.liftF(WriterT.valueT(Left(RealiserGotNone)))
+      case None => StateT.liftF(WriterT.valueT(Left(err)))
     }
   }
 
