@@ -94,7 +94,15 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
         }, RealiserMissingPronoun(v))
       } yield ProperNP(pronoun.person, pronoun.plural)
 
-    properNP <+> pronounNP
+    lazy val questionNP: F[NPGrammar] =
+      for {
+        relations <- allRelations(v)
+        question <- liftOption(relations.collectFirst {
+          case q: Question[_] => q
+        }, RealiserMissingPronoun(v))
+      } yield ProperNP(Person.Third, false)
+
+    properNP <+> pronounNP <+> questionNP
   }
 
   def tellProperNounPhrase(v: Variable, casus: Casus): F[Unit] = {
@@ -155,8 +163,21 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
     } yield ()
   }
 
+  def questionWord(label: String, casus: Casus): F[String] = {
+    pure(label) // TODO -- this is a hack
+  } 
+
+  def tellQuestionPronounPhrase(v: Variable, casus: Casus): F[Unit] = {
+    for {
+      allPreds <- allRelations(v)
+      pronoun <- liftOption(allPreds.collectFirst { case q: Question[_] => q }, RealiserMissingPronoun(v))
+      word <- questionWord(pronoun.label, casus)
+      _ <- tell(word)
+    } yield ()
+  }
+
   def tellNounPhrase(v: Variable, casus: Casus): F[Unit] = {
-    tellProperNounPhrase(v, casus) <+> tellPronounPhrase(v, casus)
+    tellProperNounPhrase(v, casus) <+> tellPronounPhrase(v, casus) <+> tellQuestionPronounPhrase(v, casus)
   }
 
   def tellImperative(rel: Relation[Recursive] with VerbRelation[_]): F[Unit] = {
