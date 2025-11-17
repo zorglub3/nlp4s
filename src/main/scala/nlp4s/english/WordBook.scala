@@ -12,6 +12,34 @@ case class WordBook(
   adjectives: Map[String, WordBook.Entry.AdjectiveEntry],
   quantifiers: Map[String, WordBook.Entry.QuantifierEntry]
 ) {
+  def toBeForm(
+    person: Person,
+    plural: Boolean,
+    tense: Tense,
+  ): String = {
+    (person, plural, tense) match {
+      case (Person.First, false, Tense.Present) => "am"
+      case (Person.Third, false, Tense.Present) => "is"
+      case (_, _, Tense.Present) => "are"
+      case (Person.First, false, Tense.Past) => "was"
+      case (Person.Third, false, Tense.Past) => "was"
+      case (_, _, Tense.Past) => "were"
+      case (_, _, Tense.BareInfinitive) => "be"
+      case (_, _, Tense.FullInfinitive) => "be"
+      case (_, _, Tense.PresentParticiple) => "being"
+      case (_, _, Tense.PastParticiple) => "been"
+      case _ => "be"
+    }
+  }
+
+  def toHaveForm(
+    person: Person,
+    plural: Boolean,
+    tense: Tense,
+  ): String = {
+    ???
+  }
+
   def verbForm(
     label: String, 
     person: Person, 
@@ -20,20 +48,24 @@ case class WordBook(
   ): Option[String] = {
     import WordBook.Entry._
 
-    verbs.get(label).flatMap {
-      case VerbEntry(r, ps, pp, ppart, past, pastpart) => {
-        (person, plural, tense) match {
-          case (Person.Third, false, Tense.Present) => Some(ps)
-          case (_, _, Tense.Present) => Some(pp)
-          case (_, _, Tense.Past) => Some(past)
-          case (_, _, Tense.BareInfinitive) => Some(r)
-          case (_, _, Tense.PresentParticiple) => Some(ppart)
-          case (_, _, Tense.PastParticiple) => Some(pastpart)
-          case (_, _, Tense.FullInfinitive) => Some(r)
-          case x => { println(s"AAARGH! $x") ; None } // TODO
+    if(label == "be") {
+      Some(toBeForm(person, plural, tense))
+    } else {
+      verbs.get(label).flatMap {
+        case VerbEntry(r, ps, pp, ppart, past, pastpart) => {
+          (person, plural, tense) match {
+            case (Person.Third, false, Tense.Present) => Some(ps)
+            case (_, _, Tense.Present) => Some(pp)
+            case (_, _, Tense.Past) => Some(past)
+            case (_, _, Tense.BareInfinitive) => Some(r)
+            case (_, _, Tense.PresentParticiple) => Some(ppart)
+            case (_, _, Tense.PastParticiple) => Some(pastpart)
+            case (_, _, Tense.FullInfinitive) => Some(r)
+            case x => { println(s"AAARGH! $x") ; None } // TODO
+          }
         }
+        case _ => None
       }
-      case _ => None
     }
   }
 
@@ -100,7 +132,7 @@ object WordBook {
         case TransitiveVerb(r, ps, pp, ppart, past, pastpart) => verbEntries += label -> Entry.VerbEntry(r, ps, pp, ppart, past, pastpart)
         case HelpVerb(r, ps, pp, ppart, past, pastpart) => verbEntries += label -> Entry.VerbEntry(r, ps, pp, ppart, past, pastpart)
         case LinkVerb(r, ps, pp, ppart, past, pastpart) => verbEntries += label -> Entry.VerbEntry(r, ps, pp, ppart, past, pastpart)
-        // case ModalVerb(form) => verbEntries += label -> ??? // TODO
+        case ModalVerb(f, false, None) => verbEntries += label -> Entry.VerbEntry(f, f, f, f, f, f)
         case Noun(s, p, sp, pp) => nounEntries += label -> Entry.NounEntry(s, p, sp, pp, false)
         case MassNoun(s, sp) => nounEntries += label -> Entry.NounEntry(s, "", sp, "", true)
         case Adjective(a, c, s) => adjectiveEntries += label -> Entry.AdjectiveEntry(a, c, s, false) 

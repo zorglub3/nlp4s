@@ -127,14 +127,15 @@ class EnglishGraphInterpreter extends GraphInterpreter {
     for {
       h <- graphEdgeFrom(EnglishLinkTags.H, w)
       s <- graphEdgeFrom(EnglishLinkTags.S, w)
-      mode = if(h < s) Mode.Interrogative else Mode.Declarative
+      isQuestion = h < s
+      mode = if(isQuestion) Mode.Interrogative else Mode.Declarative
       r <- verbRoot(h)
       n <- negation(h)
       tense <- verbTense(h)
       label <- getLabel(h)
       newHandle <- makeHandle()
       modalVariable <- makeGlobalVariable()
-      _ <- addRelation(handle, Relation.Modal(modalVariable, label, n, newHandle))
+      _ <- addRelation(handle, Relation.Modal(modalVariable, label, n, isQuestion, newHandle))
       _ <- addGlobalRelation(Relation.VerbTense(tense, modalVariable))
       _ <- addGlobalRelation(Relation.VerbMode(mode, modalVariable))
     } yield newHandle

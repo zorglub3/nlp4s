@@ -34,8 +34,8 @@ trait StandardWords { self: Lexicon.Builder =>
     
     Determiner("definite_singular", "the", false),
     Determiner("definite_plural", "the", true),
-    Determiner("indefinite_singular", "a", false),
     Determiner("indefinite_singular", "an", false),
+    Determiner("indefinite_singular", "a", false),
     Determiner("many_plural", "many", true),
     Determiner("all_plural", "all", true),
     Determiner("all_definite_plural", "all_the", true),

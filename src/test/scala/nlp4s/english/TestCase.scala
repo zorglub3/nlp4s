@@ -83,6 +83,7 @@ object TestCase {
       TestCase("who were not running", 0, 4, false, Mode.Interrogative),
       TestCase("who run", 0, 2, false, Mode.Interrogative),
       TestCase("are they a table", 1, 4, false, Mode.Interrogative),
+      TestCase("Will I drink it", 1, 4, false, Mode.Interrogative),
       )
 }
 

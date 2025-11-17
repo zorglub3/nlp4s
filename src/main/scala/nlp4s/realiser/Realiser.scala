@@ -15,15 +15,15 @@ abstract class Realiser {
   type W[T] = WriterT[E, List[String], T]
   type F[T] = StateT[W, RealiserState, T]
 
-  case class Modality(verb: String, negated: Boolean)
+  case class Modality(verb: String, tense: Tense, negated: Boolean, question: Boolean)
 
   case class RealiserState(
     variableRelations: List[(Variable, List[Relation[Relation.Recursive]])],
     globalRelations: List[Relation[Relation.Recursive]],
     modality: List[Modality],
   ) {
-    def pushModality(verb: String, negated: Boolean): RealiserState =
-      RealiserState(variableRelations, globalRelations, Modality(verb, negated)::modality)
+    def pushModality(verb: String, tense: Tense, negated: Boolean, question: Boolean): RealiserState =
+      RealiserState(variableRelations, globalRelations, Modality(verb, tense, negated, question)::modality)
     def popModality(): RealiserState = {
       if(modality.isEmpty) {
         RealiserState(variableRelations, globalRelations, List.empty)
@@ -47,8 +47,8 @@ abstract class Realiser {
 
   def init(): RealiserState = RealiserState(List.empty, List.empty, List.empty)
 
-  def pushModality(verb: String, negated: Boolean): F[Unit] =
-    StateT.modify(_.pushModality(verb, negated))
+  def pushModality(verb: String, tense: Tense, negated: Boolean, question: Boolean): F[Unit] =
+    StateT.modify(_.pushModality(verb, tense, negated, question))
 
   def popModality(): F[Unit] =
     StateT.modify(_.popModality())

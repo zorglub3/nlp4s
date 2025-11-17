@@ -189,13 +189,18 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
     } yield ()
   }
 
+  def modalityVerb(): F[Option[(String, Tense)]] =
+    currentModality().map(_.map(x => (x.verb, x.tense)))
+
   def tellInterrogative(rel: Relation[Recursive] with VerbRelation[_]): F[Unit] = {
     val subject = rel.args.head
     val args = rel.args.tail
 
     for {
       tense <- verbTense(rel.variable)
-      (auxForm, mainForm) = tenseForms(tense, true)
+      (tenseAux, mainForm) = tenseForms(tense, true)
+      modalForm <- modalityVerb()
+      auxForm = modalForm.orElse(tenseAux)
       grammar <- nounPhraseGrammar(subject)
       _ <- whenOpt(auxForm) { case (l, t) => tellVerb(l, grammar, t) }
       _ <- tellNounPhrase(subject, Casus.Nominative)
@@ -210,7 +215,9 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
 
     for {
       tense <- verbTense(rel.variable)
-      (auxForm, mainForm) = tenseForms(tense, false)
+      (tenseAux, mainForm) = tenseForms(tense, false)
+      modalForm <- modalityVerb()
+      auxForm = modalForm.orElse(tenseAux)
       grammar <- nounPhraseGrammar(subject)
       _ <- tellNounPhrase(subject, Casus.Nominative)
       _ <- whenOpt(auxForm) { case (l, t) => tellVerb(l, grammar, t) }
@@ -235,11 +242,12 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
   }
   */
 
- def tellSingleRelation(relation: Relation[Recursive], f: Recursive => F[Unit]): F[Unit] = {
+  def tellSingleRelation(relation: Relation[Recursive], f: Recursive => F[Unit]): F[Unit] = {
     relation match {
-      case Modal(v, modality, negated, scope) => {
+      case Modal(v, modality, negated, question, scope) => {
         for {
-          _ <- pushModality(modality, negated)
+          tense <- verbTense(v)
+          _ <- pushModality(modality, tense, negated, question)
           _ <- f(scope)
           _ <- popModality()
         } yield ()
@@ -247,9 +255,15 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
       case vr: VerbRelation[_] => {
         verbMode(vr.variable) >>= {
           case Mode.Imperative => tellImperative(vr)
-          case Mode.Interrogative => tellInterrogative(vr)
-          case Mode.Declarative => tellDeclarative(vr)
           case Mode.Exclamatory => tellDeclarative(vr)
+          case _ => {
+            currentModality() >>= (x => pure(x.map(_.question).getOrElse(false))) >>= {
+              case true => tellInterrogative(vr)
+              case false => tellDeclarative(vr)
+            }
+          }
+          // case Mode.Interrogative => tellInterrogative(vr)
+          // case Mode.Declarative => tellDeclarative(vr)
         }
       }
       case _ => failRelation(relation)

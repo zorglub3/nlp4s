@@ -203,13 +203,14 @@ object Relation {
     variable: Variable,
     modality: String,
     negated: Boolean,
+    question: Boolean,
     scope: H,
   ) extends Relation[H](modality ++ (if(negated) "_not" else ""), List.empty, List(variable), List(scope)) with VerbRelation[H] {
     def mapH[I](f: H => I): Relation[I] =
-      Modal(variable, modality, negated, f(scope))
+      Modal(variable, modality, negated, question, f(scope))
 
     private[mrs] def flatMapH[I](f: H => QuantifierScope.F[I]): QuantifierScope.F[Relation[I]] =
-      for(s <- f(scope)) yield Modal(variable, modality, negated, s)
+      for(s <- f(scope)) yield Modal(variable, modality, negated, question, s)
 
     def args = List.empty
   }
