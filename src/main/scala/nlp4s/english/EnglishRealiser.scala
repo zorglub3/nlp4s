@@ -242,6 +242,13 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
   }
   */
 
+  def isQuestion(v: Variable): F[Boolean] = {
+    for {
+      modality <- currentModality()
+      mode <- verbMode(v)
+    } yield modality.map(_.question).getOrElse(mode == Mode.Interrogative)
+  }
+
   def tellSingleRelation(relation: Relation[Recursive], f: Recursive => F[Unit]): F[Unit] = {
     relation match {
       case Modal(v, modality, negated, question, scope) => {
@@ -257,7 +264,8 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
           case Mode.Imperative => tellImperative(vr)
           case Mode.Exclamatory => tellDeclarative(vr)
           case _ => {
-            currentModality() >>= (x => pure(x.map(_.question).getOrElse(false))) >>= {
+            isQuestion(vr.variable) >>= {
+            // currentModality() >>= (x => pure(x.map(_.question).getOrElse(false))) >>= {
               case true => tellInterrogative(vr)
               case false => tellDeclarative(vr)
             }

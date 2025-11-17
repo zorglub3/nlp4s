@@ -13,16 +13,12 @@ class ModeSpec extends AnyFlatSpec with Matchers {
     true shouldBe true
   }
 
-  def collectMode(mrs: MRS): Option[Mode] = {
-    mrs.hook.globalPredicates.collectFirst { case Relation.VerbMode(mode, _) => mode }
-  }
-
   for(testCase <- TestCase.all) {
     if(!testCase.ignore && testCase.parses > 0) {
       it should s"interpret mode of '${testCase.text}' to ${testCase.mode} (in all parses)" in {
         val demo = new EnglishDemo
 
-        val m = demo.interpretString(testCase.text).map(_.map(collectMode(_)))
+        val m = demo.interpretString(testCase.text).map(_.map(x => Some(x.mode())))
 
         val r = List.fill(testCase.parses)(Some(testCase.mode))
 

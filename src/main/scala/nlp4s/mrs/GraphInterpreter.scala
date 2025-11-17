@@ -135,6 +135,9 @@ class GraphInterpreter {
   def optional[T](v: Option[Interpret[T]]): Interpret[Unit] =
     v.map(_.flatMap(_ => pure(()))).getOrElse(pure(()))
 
+  def when(cond: Boolean, action: => Interpret[Unit]): Interpret[Unit] =
+    if(cond) action else pure(())
+
   def toOption[T](v: Interpret[T]): Interpret[Option[T]] =
     v.map(Option.apply) <+> pure(None)
 

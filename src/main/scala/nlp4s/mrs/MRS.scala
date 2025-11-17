@@ -1,5 +1,7 @@
 package nlp4s.mrs
 
+import nlp4s.base.Mode
+
 case class MRS(
   hook: MRS.Hook,
   eps: Map[Handle, List[Relation[Handle]]],
@@ -26,6 +28,32 @@ case class MRS(
       eps.filter { p => ! floatingEps.contains(p._1) },
       eps.filter { p => floatingEps.contains(p._1) },
       constraints)
+  }
+
+  def mode(): Mode = {
+    val globalVerbModes = hook.globalPredicates.collect { 
+      case Relation.VerbMode(mode, _) => mode
+    }.toList
+
+    val hasQuestionModalVerb = false // TODO 
+
+    val hasGlobalQuestionPronoun = !hook.globalPredicates.collect {
+      case Relation.Question(_, _) => ()
+    } .isEmpty
+
+    if(globalVerbModes.contains(Mode.Imperative)) {
+      Mode.Imperative
+    } else if(globalVerbModes.contains(Mode.Exclamatory)) {
+      Mode.Exclamatory
+    } else if(globalVerbModes.contains(Mode.Interrogative)) {
+      Mode.Interrogative
+    } else if(hasGlobalQuestionPronoun) {
+      Mode.Interrogative
+    } else if(hasQuestionModalVerb) {
+      Mode.Interrogative
+    } else {
+      Mode.Declarative
+    }
   }
 }
 

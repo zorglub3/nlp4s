@@ -49,10 +49,11 @@ class EnglishGraphInterpreter extends GraphInterpreter {
       _ <- guardEmpty(graphEdgeFrom(EnglishLinkTags.T, w))
       _ <- guardEmpty(graphEdgeFrom(EnglishLinkTags.H, w))
       s <- graphEdgeFrom(EnglishLinkTags.S, w) <+> graphEdgeFrom(EnglishLinkTags.Qs, w)
-      isQuestionSubj <- tokenHasTag(s, EnglishWordTags.Question)
+      // isQuestionSubj <- tokenHasTag(s, EnglishWordTags.Question)
       tense <- verbTense(w)
       label <- getLabel(w)
-    } yield (if(isQuestionSubj) Mode.Interrogative else Mode.Declarative, tense, label)
+    } yield (Mode.Declarative, tense, label)
+    // } yield (if(isQuestionSubj) Mode.Interrogative else Mode.Declarative, tense, label)
   }
     
   def imperativeTense(w: Int): Interpret[(Mode, Tense, Label)] = {
@@ -81,7 +82,7 @@ class EnglishGraphInterpreter extends GraphInterpreter {
     for {
       h <- graphEdgeFrom(EnglishLinkTags.T, w)
       s <- graphEdgeFrom(EnglishLinkTags.S, w) <+> graphEdgeFrom(EnglishLinkTags.Q, w)
-      isQuestionSubj <- tokenHasTag(s, EnglishWordTags.Question)
+      // isQuestionSubj <- tokenHasTag(s, EnglishWordTags.Question)
       r <- verbRoot(w)
       _ <- guard(r == "be")
       _ <- guardTokenHasTag(h, EnglishWordTags.WordTense(Tense.PresentParticiple))
@@ -90,7 +91,8 @@ class EnglishGraphInterpreter extends GraphInterpreter {
         case EnglishWordTags.WordTense(Tense.Past) => Tense.PastProgressive
       }
       label <- getLabel(h)
-    } yield (if(w < s || isQuestionSubj) Mode.Interrogative else Mode.Declarative, t, label)
+    } yield (if(w < s) Mode.Interrogative else Mode.Declarative, t, label)
+    // } yield (if(w < s || isQuestionSubj) Mode.Interrogative else Mode.Declarative, t, label)
   }
 
   /*
@@ -315,7 +317,10 @@ class EnglishGraphInterpreter extends GraphInterpreter {
       plural <- tokenHasTag(w, EnglishWordTags.Plural)
       gender <- collectTag(w) { case EnglishWordTags.Gender(g) => g } .map { _.headOption }
       v <- makeGlobalVariable()
+      isQuestionPronoun <- tokenHasTag(w, EnglishWordTags.Question)
       _ <- addGlobalRelation(Relation.Pronoun(person, plural, gender, v))
+      label <- getLabel(w) <+> word(w)
+      _ <- when(isQuestionPronoun, addGlobalRelation(Relation.Question(label, v)))
       /*
       v <- makeVariable()
       h0 <- makeHandle()
