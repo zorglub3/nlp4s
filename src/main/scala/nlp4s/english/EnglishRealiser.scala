@@ -180,6 +180,14 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
     tellProperNounPhrase(v, casus) <+> tellPronounPhrase(v, casus) <+> tellQuestionPronounPhrase(v, casus)
   }
 
+  def tellPreposition(label: String, v: Variable): F[Unit] = {
+    for {
+      prepositionWord <- liftOption(wordBook.prepositionForm(label), RealiserMissingWord(label))
+      _ <- tell(prepositionWord)
+      _ <- tellNounPhrase(v, Casus.Accusative)
+    } yield ()
+  }
+
   def tellImperative(rel: Relation[Recursive] with VerbRelation[_]): F[Unit] = {
     val args = rel.args.tail
 
@@ -265,15 +273,15 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
           case Mode.Exclamatory => tellDeclarative(vr)
           case _ => {
             isQuestion(vr.variable) >>= {
-            // currentModality() >>= (x => pure(x.map(_.question).getOrElse(false))) >>= {
               case true => tellInterrogative(vr)
               case false => tellDeclarative(vr)
             }
           }
-          // case Mode.Interrogative => tellInterrogative(vr)
-          // case Mode.Declarative => tellDeclarative(vr)
         }
       }
+      case Preposition(name, x0, x1) => tellPreposition(name, x1)
+      // case Adverb(adverb, v) => ???
+      // case ScopalAdverb(name, scope) => ???
       case _ => failRelation(relation)
     }
   }

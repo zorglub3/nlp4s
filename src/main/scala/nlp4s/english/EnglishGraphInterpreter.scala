@@ -166,6 +166,8 @@ class EnglishGraphInterpreter extends GraphInterpreter {
     } yield List(l, r).flatten
   }
 
+  // TODO special case of to-be questions
+  // example: "is he a man" (only for 'be' - no other verbs)
   def verb(
     w: Int, 
     h: Handle, 
@@ -219,6 +221,8 @@ class EnglishGraphInterpreter extends GraphInterpreter {
     graphEdgeFrom(EnglishLinkTags.T, mainVerb) >>=
     { x => nounPhraseFrom(EnglishLinkTags.O, x, vpHandle) }
   }
+
+  // TODO linkVerbPhrase
 
   def verbPhrase(mainVerb: Int): Interpret[Unit] = {
     for {

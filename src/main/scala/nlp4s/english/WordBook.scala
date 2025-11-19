@@ -10,7 +10,8 @@ case class WordBook(
   verbs: Map[String, WordBook.Entry.VerbEntry],
   nouns: Map[String, WordBook.Entry.NounEntry],
   adjectives: Map[String, WordBook.Entry.AdjectiveEntry],
-  quantifiers: Map[String, WordBook.Entry.QuantifierEntry]
+  quantifiers: Map[String, WordBook.Entry.QuantifierEntry],
+  prepositions: Map[String, WordBook.Entry.PrepositionEntry]
 ) {
   def toBeForm(
     person: Person,
@@ -69,6 +70,10 @@ case class WordBook(
     }
   }
 
+  def prepositionForm(label: String): Option[String] = {
+    prepositions.get(label).map(_.word)
+  }
+
   def nounForm(label: String, plural: Boolean, possessive: Boolean): Option[String] = {
     import WordBook.Entry._
 
@@ -125,6 +130,7 @@ object WordBook {
     lazy val nounEntries = Map.newBuilder[String, Entry.NounEntry]
     lazy val adjectiveEntries = Map.newBuilder[String, Entry.AdjectiveEntry]
     lazy val quantifierEntries = Map.newBuilder[String, Entry.QuantifierEntry]
+    lazy val prepositionEntries = Map.newBuilder[String, Entry.PrepositionEntry]
 
     def addEntry(label: String, entry: EnglishLexiconEntry): Builder = {
       entry match {
@@ -138,6 +144,7 @@ object WordBook {
         case Adjective(a, c, s) => adjectiveEntries += label -> Entry.AdjectiveEntry(a, c, s, false) 
         case SimpleAdjective(a) => adjectiveEntries += label -> Entry.AdjectiveEntry(a, "", "", true)
         case Determiner(_label, w, plural) => quantifierEntries += label -> Entry.QuantifierEntry(w, plural)
+        case Preposition(word) => prepositionEntries += word -> Entry.PrepositionEntry(word)
         case _ => {} // ignore for now
       }
 
@@ -149,7 +156,8 @@ object WordBook {
         verbEntries.result(),
         nounEntries.result(),
         adjectiveEntries.result(),
-        quantifierEntries.result()
+        quantifierEntries.result(),
+        prepositionEntries.result()
       )
     }
   }
@@ -188,6 +196,10 @@ object WordBook {
     case class QuantifierEntry(
       word: String,
       plural: Boolean
+    )
+
+    case class PrepositionEntry(
+      word: String,
     )
   }
 }

@@ -215,7 +215,7 @@ object Relation {
     def args = List.empty
   }
 
-  case class Link[H](
+  case class LinkVerb[H](
     variable: Variable,
     mode: String,
     negated: Boolean,
@@ -225,10 +225,10 @@ object Relation {
     override def subject = Some(subj)
 
     def mapH[I](f: H => I): Relation[I] =
-      Link(variable, mode, negated, subj, f(scope))
+      LinkVerb(variable, mode, negated, subj, f(scope))
 
     private[mrs] def flatMapH[I](f: H => QuantifierScope.F[I]): QuantifierScope.F[Relation[I]] =
-      for( s <- f(scope)) yield Link(variable, mode, negated, subj, s)
+      for( s <- f(scope)) yield LinkVerb(variable, mode, negated, subj, s)
 
     def args = List(subj)
   }
