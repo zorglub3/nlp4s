@@ -49,20 +49,20 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
   // present and main verb with tense "present participle", so 
   // tenseForms(Tense.PresentProgressive, interrogative = false|true) 
   //   ===> (Some(("be", Tense.Present)), Tense.PresentParticiple)
-  def tenseForms(tense: Tense, interrogative: Boolean): (Option[(String, Tense)], Tense) = {
+  def tenseForms(tense: Tense, interrogative: Boolean): (Option[(String, Tense, Boolean)], Tense) = {
     import Tense._
 
     tense match {
-      case Present if interrogative => (Some(("do", Present)), BareInfinitive)
+      case Present if interrogative => (Some(("do", Present, false)), BareInfinitive)
       case Present => (None, Present)
-      case Past if interrogative => (Some(("do", Past)), BareInfinitive)
+      case Past if interrogative => (Some(("do", Past, false)), BareInfinitive)
       case Past => (None, Past)
       // case Future => (Some(("will", Present)), BareInfinitive)
-      case PresentProgressive => (Some(("be", Present)), PresentParticiple)
-      case PastProgressive => (Some(("be", Past)), PresentParticiple)
+      case PresentProgressive => (Some(("be", Present, false)), PresentParticiple)
+      case PastProgressive => (Some(("be", Past, false)), PresentParticiple)
       // case FutureProgressive => ???
-      case PresentPerfect => (Some(("be", Present)), PastParticiple)
-      case PastPerfect => (Some(("have", Past)), PastParticiple)
+      case PresentPerfect => (Some(("be", Present, false)), PastParticiple)
+      case PastPerfect => (Some(("have", Past, false)), PastParticiple)
       // case FuturePerfect => ???
       case PresentParticiple => (None, PresentParticiple)
       case PastParticiple => (None, PastParticiple)
@@ -188,6 +188,13 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
     } yield ()
   }
 
+  def tellAdverb(label: String): F[Unit] = {
+    for {
+      adverbWord <- liftOption(wordBook.adverbForm(label), RealiserMissingWord(label))
+      _ <- tell(adverbWord)
+    } yield ()
+  }
+
   def tellImperative(rel: Relation[Recursive] with VerbRelation[_]): F[Unit] = {
     val args = rel.args.tail
 
@@ -197,8 +204,8 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
     } yield ()
   }
 
-  def modalityVerb(): F[Option[(String, Tense)]] =
-    currentModality().map(_.map(x => (x.verb, x.tense)))
+  def modalityVerb(): F[Option[(String, Tense, Boolean)]] =
+    currentModality().map(_.map(x => (x.verb, x.tense, x.negated)))
 
   def tellInterrogative(rel: Relation[Recursive] with VerbRelation[_]): F[Unit] = {
     val subject = rel.args.head
@@ -210,7 +217,7 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
       modalForm <- modalityVerb()
       auxForm = modalForm.orElse(tenseAux)
       grammar <- nounPhraseGrammar(subject)
-      _ <- whenOpt(auxForm) { case (l, t) => tellVerb(l, grammar, t) }
+      _ <- whenOpt(auxForm) { case (l, t, _) => tellVerb(l, grammar, t) }
       _ <- tellNounPhrase(subject, Casus.Nominative)
       _ <- tellVerb(rel.name, grammar, mainForm)
       _ <- args.map(tellNounPhrase(_, Casus.Accusative)).sequence
@@ -228,7 +235,14 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
       auxForm = modalForm.orElse(tenseAux)
       grammar <- nounPhraseGrammar(subject)
       _ <- tellNounPhrase(subject, Casus.Nominative)
-      _ <- whenOpt(auxForm) { case (l, t) => tellVerb(l, grammar, t) }
+      _ <- whenOpt(auxForm) { case (l, t, n2) => 
+        for {
+          _ <- tellVerb(l, grammar, t)
+          n1 <- verbNegation(rel.variable)
+          _ <- when(n1 || n2) { tell("not") }
+        } yield ()
+        // tellVerb(l, grammar, t) >> (verbNegation(rel.variable) >>= when(_, tell("not")))
+      }
       _ <- tellVerb(rel.name, grammar, mainForm)
       _ <- args.map(tellNounPhrase(_, Casus.Accusative)).sequence
     } yield ()
@@ -280,8 +294,12 @@ class EnglishRealiser(wordBook: WordBook) extends Realiser {
         }
       }
       case Preposition(name, x0, x1) => tellPreposition(name, x1)
-      // case Adverb(adverb, v) => ???
-      // case ScopalAdverb(name, scope) => ???
+      case Adverb(adverb, v) => {
+        tellAdverb(adverb) 
+      }
+      case ScopalAdverb(name, scope) => {
+        tellAdverb(name) >> f(scope)
+      }
       case _ => failRelation(relation)
     }
   }

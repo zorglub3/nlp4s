@@ -2,6 +2,12 @@ package nlp4s.mrs
 
 import nlp4s.base.Mode
 
+// TODO 
+// - simplification for a chain h1 -> h2 -> h3 where there is no h_x such that
+//   h1 -> h_x -> h3, then delete h1 and h2 and replace h1 with h3
+// - also for h1 -> h2 and no h_x such that h1 -> h_x, then delete h1 and replace 
+//   with h2
+
 case class MRS(
   hook: MRS.Hook,
   eps: Map[Handle, List[Relation[Handle]]],

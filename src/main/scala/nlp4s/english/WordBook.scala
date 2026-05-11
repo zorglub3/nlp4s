@@ -11,7 +11,8 @@ case class WordBook(
   nouns: Map[String, WordBook.Entry.NounEntry],
   adjectives: Map[String, WordBook.Entry.AdjectiveEntry],
   quantifiers: Map[String, WordBook.Entry.QuantifierEntry],
-  prepositions: Map[String, WordBook.Entry.PrepositionEntry]
+  prepositions: Map[String, WordBook.Entry.PrepositionEntry],
+  adverbs: Map[String, WordBook.Entry.AdverbEntry],
 ) {
   def toBeForm(
     person: Person,
@@ -120,6 +121,10 @@ case class WordBook(
   def quantifierPlural(label: String): Option[Boolean] = {
     quantifiers.get(label).map(_.plural)
   }
+
+  def adverbForm(label: String): Option[String] = {
+    adverbs.get(label).map(_.word)
+  }
 }
 
 object WordBook {
@@ -131,6 +136,7 @@ object WordBook {
     lazy val adjectiveEntries = Map.newBuilder[String, Entry.AdjectiveEntry]
     lazy val quantifierEntries = Map.newBuilder[String, Entry.QuantifierEntry]
     lazy val prepositionEntries = Map.newBuilder[String, Entry.PrepositionEntry]
+    lazy val adverbEntries = Map.newBuilder[String, Entry.AdverbEntry]
 
     def addEntry(label: String, entry: EnglishLexiconEntry): Builder = {
       entry match {
@@ -145,6 +151,7 @@ object WordBook {
         case SimpleAdjective(a) => adjectiveEntries += label -> Entry.AdjectiveEntry(a, "", "", true)
         case Determiner(_label, w, plural) => quantifierEntries += label -> Entry.QuantifierEntry(w, plural)
         case Preposition(word) => prepositionEntries += word -> Entry.PrepositionEntry(word)
+        case Adverb(word, root) => adverbEntries += label -> Entry.AdverbEntry(word)
         case _ => {} // ignore for now
       }
 
@@ -157,7 +164,8 @@ object WordBook {
         nounEntries.result(),
         adjectiveEntries.result(),
         quantifierEntries.result(),
-        prepositionEntries.result()
+        prepositionEntries.result(),
+        adverbEntries.result(),
       )
     }
   }
@@ -199,6 +207,10 @@ object WordBook {
     )
 
     case class PrepositionEntry(
+      word: String,
+    )
+
+    case class AdverbEntry(
       word: String,
     )
   }

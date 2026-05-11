@@ -304,6 +304,15 @@ object Relation {
       QuantifierScope.pure(VerbTense(tense, arg0))
   }
 
+  case class VerbNegation[H](
+    variable: Variable,
+  ) extends Relation[H]("negation", List.empty, List(variable), List.empty) {
+    def mapH[I](f: H => I): Relation[I] = VerbNegation(variable)
+
+    private[mrs] def flatMapH[I](f: H => QuantifierScope.F[I]): QuantifierScope.F[Relation[I]] =
+      QuantifierScope.pure(VerbNegation(variable))
+  }
+
   case class Implicit[H](
     variable: Variable,
   ) extends Relation[H]("implicit", List.empty, List(variable), List.empty) {

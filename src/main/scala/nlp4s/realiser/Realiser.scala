@@ -132,6 +132,17 @@ abstract class Realiser {
     }
   }
 
+  def verbNegation(v: Variable): F[Boolean] = {
+    StateT.inspectF { s =>
+      WriterT.valueT(
+        s.globalRelations.collectFirst { case VerbNegation(u) if u == v => true } match {
+          case Some(x) => Right(x)
+          case None => Right(false)
+        }
+      )
+    }
+  }
+
   def collectRelations(x: Variable, rel: Relation[Recursive]): F[List[Relation[Recursive]]] = {
     rel match {
       case Quantifier(_, y, rstr, body) if x == y => {
